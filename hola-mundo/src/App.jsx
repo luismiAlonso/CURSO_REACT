@@ -1,5 +1,24 @@
 import './App.css'
 import { TwitterFollowCard }  from './TwitterFollowCard.jsx'
+import { useState } from 'react'
+
+const users = [
+    {
+        userName:"Alonso",
+        name: "Luismi",
+        isFollowing: false
+    },
+    {
+        userName:"SON",
+        name: "Sonia",
+        isFollowing: false
+    },
+    {
+        userName:"ALL",
+        name: "Alicia",
+        isFollowing: true
+    }
+]
 
 /*
 export const App = ()=>{
@@ -42,17 +61,16 @@ export const App = ()=>{
 export const App = ()=>{
 
     const formatUserName = (userName) => `@${userName}`
-
     return (
 
         <section className='AppTwitterFollow'>
-            <TwitterFollowCard formatUserName={formatUserName} isFollow userName="Alonso">
+            <TwitterFollowCard formatUserName={formatUserName}  userName="Alonso">
               <strong>Luis Miguel</strong> 
             </TwitterFollowCard>
-            <TwitterFollowCard formatUserName={formatUserName} isFollow userName="Sora">
+            <TwitterFollowCard formatUserName={formatUserName}  userName="Sora">
                 <strong>Soraya Saez</strong>
             </TwitterFollowCard>
-            <TwitterFollowCard formatUserName={formatUserName} isFollow userName="ALL">
+            <TwitterFollowCard formatUserName={formatUserName}  userName="ALL">
                 <strong>Alicia Sanchez</strong>
             </TwitterFollowCard>
         </section>
@@ -61,7 +79,39 @@ export const App = ()=>{
 */
 
 /*
-****Multiples Props en un Objeto****/
+export const App = ()=>{
+
+   const [isFollowing,setName] = useState(false)
+   console.log("APP render is "+isFollowing);
+
+    return (
+
+        <section className='AppTwitterFollow'>
+            <TwitterFollowCard   userName="Luismi">
+                <strong>
+                    Luis Miguel
+                </strong> 
+            </TwitterFollowCard>
+            <TwitterFollowCard   userName="Sora">
+                <strong>
+                    Soraya
+                </strong> 
+            </TwitterFollowCard>
+            <TwitterFollowCard   userName="ALL">
+                <strong>
+                    Alicia
+                </strong> 
+            </TwitterFollowCard>
+
+            <button onClick={()=>setName(!isFollowing)}>cambio nombre</button>
+        </section>
+    ) 
+}
+*/
+
+
+/*
+****Multiples Props en un Objeto****
 export const App = ()=>{
 
     const formatUserName = (userName) => `@${userName}`
@@ -84,7 +134,34 @@ export const App = ()=>{
             </TwitterFollowCard>
         </section>
     ) 
-}
+}*/
+
+//creamos listas
+export const App = ()=>{
+
+    const [isFollowing,setName] = useState(false)
+    console.log("APP render is "+isFollowing);
+ 
+     return (
+ 
+         <section className='AppTwitterFollow'>
+           {
+                users.map(user=>{
+                    const { userName,name, isFollowing} = user
+                    return(
+                        <TwitterFollowCard 
+                        key={}
+                        userName={userName}
+                        initialState={isFollowing}>
+                            <strong>{name}</strong> 
+                        </TwitterFollowCard>
+                    )
+                }
+            )
+           }
+         </section>
+     ) 
+ }
 
 
 
