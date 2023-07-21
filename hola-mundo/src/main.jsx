@@ -1,10 +1,12 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
+import { App } from './App.jsx';
+import './index.css'
 
 const root =ReactDOM.createRoot(document.getElementById('root'));
 
 //Componente boton
-const Button = ({text})=>{
+/*const Button = ({text})=>{
 
   return (
     <button>
@@ -14,15 +16,8 @@ const Button = ({text})=>{
      {text}
     </button>
   )
-
-}
+}*/
 
 root.render(
-  <React.Fragment>
-    <Button text="hola" />
-    <Button text="adios" />
-    <Button text="mundo" />
-    {/*Button({textButton:"Hola"})*/}
- </React.Fragment>
-
-  );
+  <App />
+);
