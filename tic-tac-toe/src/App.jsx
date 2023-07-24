@@ -47,7 +47,7 @@ function App() {
     setTurn(newTurn) 
     //guardar partida estado del tablero
     
-    //saveGameStorage({board:newBoard,turn:newTurn})
+    saveGameStorage({board:newBoard,turn:newTurn})
     //checkeamos si hay ganador
     const newWinner = checkWinnerFrom(newBoard);
 
@@ -62,11 +62,14 @@ function App() {
 
   }
 
+  /*
   useEffect(()=>{
     //se ejecuta una vez al inicia y otra cuando cambia la dependecia introducida
-    saveGameStorage({board:newBoard,turn:newBoard})
-   //console.log("cambia elvalor de turn o el ganador")
-  },[winner,turn])
+    saveGameStorage({
+      board:newBoard,
+      turn:newBoard
+    })
+  },[winner,turn])*/
 
   return (
 
