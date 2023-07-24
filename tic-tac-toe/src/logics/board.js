@@ -24,7 +24,7 @@ export const checkEndGame = (newBoard)=>{
     return newBoard.every((Square) =>Square !== null)
   }
 
-
+/*
 export const updateBoard = (index,board,winner) =>{
 
     //no actualizamos si ya ha sido seleccionada
@@ -49,8 +49,5 @@ export const updateBoard = (index,board,winner) =>{
       setWinner(false)
     }
 
-}  
-
-
-
+}  */
 
