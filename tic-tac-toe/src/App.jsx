@@ -1,19 +1,18 @@
-import { useState } from 'react'
+import { useState,useEffect } from 'react'
 import {Square} from "./components/Square.jsx"
 import {WinnerModal} from './components/winnerModal.jsx'
 import {Tablero} from './components/Tablero.jsx'
 import confetti from "canvas-confetti"
 import {TURNS} from './constantes.js'
 import {checkWinnerFrom,checkEndGame} from './logics/board.js'
+import { saveGameStorage,resetGameStorage } from './storage/index.js'
 import './App.css'
 
 function App() {
 
-  console.log('render')
-
+  
   const [board, setBoard] = useState(()=>{
-    console.log('inicializar estado del board');
-    const boardFromStorage = window.localStorage.getItem('board')
+    const boardFromStorage = window.localStorage.getItem('board')  
     return boardFromStorage ? JSON.parse(boardFromStorage) : Array(9).fill(null)
   })
 
@@ -30,8 +29,7 @@ function App() {
     setTurn(TURNS.X)
     setWinner(null)
     
-    window.localStorage.removeItem('board')
-    window.localStorage.removeItem('turn')
+    resetGameStorage()
   }
 
   //console.log(board);
@@ -48,8 +46,8 @@ function App() {
     const newTurn = turn === TURNS.X ? TURNS.O : TURNS.X
     setTurn(newTurn) 
     //guardar partida estado del tablero
-    window.localStorage.setItem('board',JSON.stringify(newBoard));
-    window.localStorage.setItem('turn',newTurn)
+    
+    //saveGameStorage({board:newBoard,turn:newTurn})
     //checkeamos si hay ganador
     const newWinner = checkWinnerFrom(newBoard);
 
@@ -63,6 +61,12 @@ function App() {
     }
 
   }
+
+  useEffect(()=>{
+    //se ejecuta una vez al inicia y otra cuando cambia la dependecia introducida
+    saveGameStorage({board:newBoard,turn:newBoard})
+   //console.log("cambia elvalor de turn o el ganador")
+  },[winner,turn])
 
   return (
 
