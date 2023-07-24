@@ -1,4 +1,4 @@
-import {TURNS, WINNER_COMBOS} from '../constantes.js'
+import {WINNER_COMBOS} from '../constantes.js'
 
 //checkea ganador
 export const checkWinnerFrom = (boardToCheck)=>{

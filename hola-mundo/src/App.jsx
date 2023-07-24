@@ -72,7 +72,7 @@ export const App = ()=>{
             </TwitterFollowCard>
             <TwitterFollowCard formatUserName={formatUserName}  userName="ALL">
                 <strong>Alicia Sanchez</strong>
-            </TwitterFollowCard>
+            </TwitterFollowCard>2
         </section>
     ) 
 }
