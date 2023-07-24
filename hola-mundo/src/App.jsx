@@ -140,23 +140,38 @@ export const App = ()=>{
 export const App = ()=>{
 
     const [isFollowing,setName] = useState(false)
-    console.log("APP render is "+isFollowing);
- 
+    const users = [
+        {
+            userName: 'Alonso',
+            name: 'Luis Miguel',
+            isFollowing: true
+        },
+        {
+            userName: 'SUSU',
+            name: 'Susana Martinez',
+            isFollowing: false
+        },
+        {
+            userName: 'MATT',
+            name: 'Marta Sanchez',
+            isFollowing: true
+        }
+        
+    ]
+    //console.log(" APP: "+users[0].userName);
+    
      return (
  
          <section className='AppTwitterFollow'>
            {
-                users.map(user=>{
-                    const { userName,name, isFollowing} = user
-                    return(
-                        <TwitterFollowCard 
-                        key={}
-                        userName={userName}
-                        initialState={isFollowing}>
-                            <strong>{name}</strong> 
-                        </TwitterFollowCard>
-                    )
-                }
+                users.map(({ userName, name, isFollowing})=>(
+                    <TwitterFollowCard 
+                    key={userName}
+                    userName={userName}
+                    initialState={isFollowing}>
+                        <strong>{name}</strong> 
+                    </TwitterFollowCard>         
+                )
             )
            }
          </section>
