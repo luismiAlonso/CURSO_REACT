@@ -1,9 +1,22 @@
 import './App.css'
+import { FollowMouse } from './components/followMouse'
 
 function App() {
+
+  /*
+  const [mounted, setMounted] = useState(true)
   
   return (
-    <h1>Proyecto tres</h1>
+    <main>
+     {mounted && <FollowMouse />}
+     <button onClick={()=>setMounted(!mounted)}>Toggle mounted</button>
+    </main>
+  )*/
+
+  return (
+    <main>
+      <FollowMouse />
+    </main>
   )
 }
 
