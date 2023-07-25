@@ -52,3 +52,7 @@
   height: 40px;
   transform: translate(0px,0px)
 }
+
+body.no-cursor{
+  cursor: none;
+}
