@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
+import { getRandomFacts } from './servicios/facts.js'
 import './App.css'
 
-const CAT_ENDPOINT_RANDOM_FACTS = 'https://catfact.ninja/fact'
 //const CAT_ENDPOINT_IMG_URL = `https://cataas.com/cat/says/${firstWord}`
 const CAT_PREFIX_IMAGE_URL = 'https://cataas.com'
+
+
 
 export function App () {
   const [fact, setFact] = useState()
@@ -11,12 +13,7 @@ export function App () {
 
   //primer efecto recupera la palabra
   useEffect(() => {
-    fetch(CAT_ENDPOINT_RANDOM_FACTS)
-      .then(res => res.json())
-      .then(data => {
-        const { fact } = data
-        setFact(fact)
-      })
+    getRandomFacts().then(setFact)
   }, [])
 
   //segundo efecto recuperamos la imagen a partir del primero
@@ -32,9 +29,14 @@ export function App () {
       })
   }, [fact])
 
+  const handleClick = () => {
+    getRandomFacts().then(setFact)
+  }
+
   return (
     <main>
         <h1>APP de gatitos</h1>
+        <button onClick={handleClick}>Get New fact</button>
         <section>
           {fact && <p>{fact}</p>}
           {imgUrl && <img src={`${CAT_PREFIX_IMAGE_URL}${imgUrl}` }
