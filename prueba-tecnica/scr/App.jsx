@@ -1,36 +1,16 @@
-import { useEffect, useState } from 'react'
-import { getRandomFacts } from './servicios/facts.js'
+import { useCatFact } from './hooks/useCatFact.js'
+import { useCatImage } from './hooks/useCatImage.js'
+import { Otro } from './components/Otro.jsx'
 import './App.css'
 
 //const CAT_ENDPOINT_IMG_URL = `https://cataas.com/cat/says/${firstWord}`
-const CAT_PREFIX_IMAGE_URL = 'https://cataas.com'
-
-
 
 export function App () {
-  const [fact, setFact] = useState()
-  const [imgUrl, setImgUrl] = useState()
-
-  //primer efecto recupera la palabra
-  useEffect(() => {
-    getRandomFacts().then(setFact)
-  }, [])
-
-  //segundo efecto recuperamos la imagen a partir del primero
-  useEffect(() => {
-    if (!fact) return
-    const firstWord = fact.split(' ', 3).join(' ')
-
-    fetch(`https://cataas.com/cat/says/${firstWord}?json=true`)
-      .then(res => res.json())
-      .then(response => {
-        const { url } = response
-        setImgUrl(url)
-      })
-  }, [fact])
+  const { fact, refreshRandomFats } = useCatFact()
+  const { imgUrl } = useCatImage({ fact }) //custom hook
 
   const handleClick = () => {
-    getRandomFacts().then(setFact)
+    refreshRandomFats()
   }
 
   return (
@@ -39,9 +19,9 @@ export function App () {
         <button onClick={handleClick}>Get New fact</button>
         <section>
           {fact && <p>{fact}</p>}
-          {imgUrl && <img src={`${CAT_PREFIX_IMAGE_URL}${imgUrl}` }
-          alt={`Image extracted using the first three word for ${fact}`} />}
+          {imgUrl && <img src={imgUrl} alt={`Image extracted using the first three word for ${fact}`} />}
         </section>
+        <Otro />
     </main>
   )
 }
