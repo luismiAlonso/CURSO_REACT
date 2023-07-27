@@ -1,8 +1,10 @@
-import responseMovies from '../moks/with_result.json'
+import withResult from '../moks/with_result.json'
 import withoutResult from '../moks/no_result.json'
+import { useState } from 'react'
 
 
-export function useMovies () {
+export function useMovies ({search}) {
+    const [responseMovies, setResponseMovies] = useState([]) 
 
     const movies = responseMovies.Search
 
@@ -13,5 +15,9 @@ export function useMovies () {
       poster: movie.Poster
     }))
 
-    return { movies: mappedMovies }
+    const getMovies= () =>{
+    
+    }
+
+    return { movies: mappedMovies, getMovies }
 }

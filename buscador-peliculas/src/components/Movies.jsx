@@ -1,11 +1,11 @@
 export function ListOfMovies({ movies }) {
 
   return (
-    <ul>
+    <ul className="movieGrid">
         {
            movies.map(movie => (
-            <li key={movie.id} >
-              <h3>{movie.title}</h3>
+            <li className="movie" key={movie.id} >
+              <h3 >{movie.title}</h3>
               <h3>{movie.year}</h3>
               <img src={movie.poster} alt={movie.title} />
             </li>
