@@ -1,7 +1,8 @@
 import './App.css'
 import { Movies } from './components/Movies.jsx'
 import { useMovies } from './hooks/useMovies.js'
-import { useEffect, useRef,useState } from 'react'
+import { useCallback, useEffect, useRef,useState } from 'react'
+import debounce from 'just-debounce-it'
 //const urlApi =//www.omdbapi.com/?apikey=a91abe80&s=avenger
 
 function userSearch () {
@@ -38,21 +39,26 @@ useEffect(()=> {
 
 function App () {
   const [sort, setSort] = useState(false)
-
   const { search, updateSearch, error } = userSearch()
   const { movies, loading , getMovies} = useMovies({search, sort})
 
+  const debouncedGetMovies = useCallback(
+     debounce(search => {
+       getMovies({ search })
+    }, 400)
+    ,[getMovies]
+  )
+    
+  
 
   const handleSort = () => {
     setSort(!sort)
   }
   
-
-
 //FORMA NO CONTROLADA
  const handleSubmit = (event) => {
    event.preventDefault()
-   getMovies({search})
+   getMovies({ search })
    /*const value = imputRef.current.value
    console.log(value) */
    /*const fields = new FormData(event.target)
@@ -64,11 +70,13 @@ function App () {
 
  //controlador para cambio en la entrada
  const handleChange = (event) => {
-  const newSearch = event.target.value
-  if(newSearch.startsWith(' ')) return
-    updateSearch(event.target.value)
-    getMovies({ search: newSearch })
+   const newSearch = event.target.value
+   //if(newSearch.startsWith(' ')) return
+   updateSearch(newSearch)
+   //getMovies({ search: newSearch })
+   debouncedGetMovies(newSearch)
  }
+
     return (
       <div className='page'>
 
