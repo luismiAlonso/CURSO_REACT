@@ -9,12 +9,12 @@ import { IS_DEVELOPMENT } from './config'
 function App() {
  
   const [products] = useState(initialProducts)
-  const {filters ,filterProducts, setFilters} = useFilters()
+  const {filters , filterProducts} = useFilters()
   const filteredPodructs = filterProducts(products)
 
   return (
     <>
-      <Header changeFilters={setFilters} />
+      <Header />
       <Products products={filteredPodructs} />
       {IS_DEVELOPMENT && <Footer filters ={filters} />}
     </>
