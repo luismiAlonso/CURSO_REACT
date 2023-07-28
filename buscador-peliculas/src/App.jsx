@@ -6,10 +6,13 @@ import { useEffect, useRef,useState } from 'react'
 
 function userSearch () {
 
+  const [sort, setSort] = useState(false)
+
   const [search, updateSearch] = useState('')
   const [error, setError] = useState(null)
   const isFirstInput = useRef(true)
 
+  
 useEffect(()=> {
 
   if(isFirstInput.current){
@@ -34,19 +37,22 @@ useEffect(()=> {
 }
 
 function App () {
+  const [sort, setSort] = useState(false)
 
- const { search, updateSearch, error } = userSearch()
- const { movies: mappedMovies, getMovies} = useMovies({search})
+  const { search, updateSearch, error } = userSearch()
+  const { movies, loading , getMovies} = useMovies({search, sort})
 
- /*
- const handleClick = () =>{
-   //const value = imputRef.current.value
- }
- */
+
+  const handleSort = () => {
+    setSort(!sort)
+  }
+  
+
 
 //FORMA NO CONTROLADA
  const handleSubmit = (event) => {
    event.preventDefault()
+   getMovies({search})
    /*const value = imputRef.current.value
    console.log(value) */
    /*const fields = new FormData(event.target)
@@ -54,14 +60,14 @@ function App () {
 
    //const res = new window.FormData(event.target)
    //const { query } = Object.fromEntries(new window.FormData(event.target))
-   getMovies({search})
  }
 
  //controlador para cambio en la entrada
- const handleChange = (event) =>{
-  const newQuery = event.target.value
-  if(newQuery.startsWith(' ')) return
+ const handleChange = (event) => {
+  const newSearch = event.target.value
+  if(newSearch.startsWith(' ')) return
     updateSearch(event.target.value)
+    getMovies({ search: newSearch })
  }
     return (
       <div className='page'>
@@ -69,6 +75,8 @@ function App () {
         <header>
           <form className ='form' onSubmit={ handleSubmit }>    
             <input onChange={handleChange} value={search} name='query' placeholder='Avenger...' />
+            <label> Order </label>
+            <input type='checkbox' onChange={handleSort} checked={sort} />
             <button type='submit'>Buscar</button>
           </form>
           {error && <p style={{color:'red'}}>{error}</p> }
@@ -76,7 +84,7 @@ function App () {
 
         <main>
           {
-            <Movies movies = { mappedMovies } />
+            loading ? <p>Loading movies ... </p> : <Movies movies = { movies } />
           }
         </main>
       </div>
