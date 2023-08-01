@@ -5,9 +5,9 @@ export default function Page404 () {
         <>
         <div>
         </div>
-            <h1>Thisis not fine</h1>
+            <h1>This is not fine</h1>
             <img src='https://media.tenor.com/lxqihLckfJcAAAAC/this-is-fine.gif' alt='El perro del meme is not fine' />
-            <Link to='/'>Go to home</Link>
+            <p><Link to='/'>Go to home</Link></p>
         </>
        
     )
