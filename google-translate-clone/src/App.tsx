@@ -7,10 +7,34 @@ import './App.css'
 import { AUTO_LANGUAGE } from './constants'
 import { SectionType } from './types.d'
 import { TextArea } from './components/TextArea'
+import { useEffect } from 'react'
+import { translate } from './services/translate'
+
 
 function App() {
  const {
-  loading,setFromLanguage,setToLanguage,setFromText,interChangeLanguages,fromText,result,setResult,toLanguage,fromLanguage}= useStore()
+  loading,
+  setFromLanguage,
+  setToLanguage,
+  setFromText,
+  interChangeLanguages,
+  fromText,
+  result,
+  setResult,
+  toLanguage,
+  fromLanguage
+  }= useStore()
+
+  useEffect(() => {
+    if(fromText === '' ) return
+    translate({fromLanguage,toLanguage,text:fromText})
+      .then(result => {
+        if(result == null) return
+          setResult(result)
+      })
+      .catch(() =>{ setResult('Error') })
+  },[fromText])
+
   return (
       <Container fluid>  
         <h1>Google Translate</h1>
