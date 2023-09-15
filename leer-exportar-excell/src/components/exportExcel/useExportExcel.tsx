@@ -6,7 +6,7 @@ const useExportExcel = () => {
   const [status, setStatus] = useState(false)
 
   const exportToExcel = async (
-    jsonData: XLSX.WorkSheet[],
+    jsonData: string[],
     fileName: string
   ) => {
     try {

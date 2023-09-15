@@ -1,10 +1,10 @@
-import React, { useState } from "react"
-import {State,ExcelRow,WorksheetItem} from "../../interfaces/Istate"
-import * as XLSX from "xlsx"
+import React, { useState } from 'react'
+import { State, WorksheetItem } from '../../interfaces/Istate'
+import * as XLSX from 'xlsx'
 
 function useReadExcel() {
   const initialState: State = {
-    nameDoc: "",
+    nameDoc: '',
     woorksheets: [],
     hoja: [],
     filas: [],
@@ -15,30 +15,38 @@ function useReadExcel() {
 
   const selectHoja = React.createRef<HTMLSelectElement>()
 
+  const resetState = () => {
+    setState(initialState)
+  }
+
   const leerFilas = (index: number) => {
     try {
       const hoja = state.woorksheets[index].data
-      const filas: ExcelRow[] = XLSX.utils.sheet_to_json(hoja)
+      const filas: string[] = XLSX.utils.sheet_to_json(hoja, {
+        dateNF: 'd/m/yyyy', // Especifica el formato de fecha esperado
+        raw: false // Mantén las fechas como texto
+      })
       state.filas = filas
-      setState({ ...state, filas:state.filas })
+      setState({ ...state, filas: state.filas })
     } catch (error) {
-      console.error("Error al leer filas", error)
+      console.error('Error al leer filas', error)
     }
   }
 
   const leerPropiedades = (index: number) => {
     try {
       const hoja = state.woorksheets[index]
-      
+      const newProiedades = []
       for (const key in hoja.data) {
-        const regEx = new RegExp("^(\\w)(1){1}$")
+        const regEx = new RegExp('^(\\w)(1){1}$')
         if (regEx.test(key)) {
-          state.propiedades.push(hoja.data[key].v)
+          newProiedades.push(hoja.data[key].w)
         }
       }
-      setState({ ...state,propiedades: state.propiedades })
+      state.propiedades = newProiedades
+      setState({ ...state, propiedades: state.propiedades })
     } catch (error) {
-      console.error("Error al leer propiedades", error)
+      console.error('Error al leer propiedades', error)
     }
   }
 
@@ -53,15 +61,14 @@ function useReadExcel() {
           propiedades: state.propiedades
         })
       } catch (error) {
-        console.error("Error al cambiar de Hoja", error)
+        console.error('Error al cambiar de Hoja', error)
       }
     }
   }
 
   const leerExcel = (e: React.FormEvent<HTMLFormElement>) => {
-
     const formData = new FormData(e.currentTarget)
-    const excel = formData.get("excel")
+    const excel = formData.get('excel')
     if (excel instanceof Blob) {
       const listWorksheet: WorksheetItem[] = []
       const reader = new FileReader()
@@ -70,7 +77,9 @@ function useReadExcel() {
         try {
           if (e.target && e.target.result) {
             const data = new Uint8Array(e.target.result as ArrayBuffer)
-            const excelRead = XLSX.read(data, { type: "array" })
+            const excelRead = XLSX.read(data, {
+              type: 'array'
+            })
 
             excelRead.SheetNames.forEach(function (SheetNames, index) {
               if (Array.isArray(excelRead.SheetNames)) {
@@ -81,34 +90,34 @@ function useReadExcel() {
                 })
               }
             })
+
             state.woorksheets = listWorksheet
 
             setState({ ...state, woorksheets: state.woorksheets })
 
             leerPropiedades(0)
             leerFilas(0)
-
             setState({
               ...state,
               filas: state.filas,
               propiedades: state.propiedades,
               status: true
             })
-
           } else {
-            console.log("target result error")
+            console.log('target result error')
           }
         } catch (error) {
-          console.error("Target result error", error)
+          console.error('Target result error', error)
         }
       }
     } else {
-      console.log("Blob error")
+      console.log('Blob error')
     }
   }
 
   return {
     state,
+    resetState,
     selectHoja,
     cambiarHoja,
     setState,

@@ -1,23 +1,29 @@
-import useFontSize from "./useFontSize"
-import useReadExcel from "../components/readExcel/useReadExcel"
-import useExportExcel from "./exportExcel/useExportExcel"
-import { ExcelRow } from "../interfaces/Istate"
-import { useEffect, useState } from "react"
+import useFontSize from './useFontSize'
+import useReadExcel from '../components/readExcel/useReadExcel'
+import useExportExcel from './exportExcel/useExportExcel'
+import usePaginator from './paginator/usePaginator'
+import { useEffect, useState } from 'react'
+/*import { mapearArrayJSON } from "../utils/utilsData"
+import { WorksheetItem } from "../interfaces/Istate"*/
 
 function Excel() {
   const { fontSize, aumentarFuente, reducirFuente } = useFontSize()
 
-  const { state, selectHoja, cambiarHoja, leerExcel } = useReadExcel()
+  const { state, resetState, selectHoja, cambiarHoja, leerExcel } =
+    useReadExcel()
 
-  const [currentState, setCurrentState] = useState<ExcelRow[] | undefined>()
+  const { currentPage, totalPages, getPageData, nextPage, prevPage } =
+    usePaginator(state.filas, 100)
+
+  const [currentState, setCurrentState] = useState<string[] | undefined>()
 
   const { exportToExcel, exportStatus } = useExportExcel()
 
   useEffect(() => {
-    if (state.status && state.filas) {
-      setCurrentState(state.filas)
+    if (state.status && state.filas.length > 0) {
+      setCurrentState(state.propiedades)
     }
-  }, [state.status])
+  }, [state])
   // Coloca aquí la lógica que deseas ejecutar después de la actualización del estado
   const handlerLeerExcel = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -27,9 +33,9 @@ function Excel() {
   const handlerExportExcel = () => {
     //e.preventDefault()
     if (currentState !== undefined) {
-      exportToExcel(state.filas, "test.xlsx")
-    }else{
-      console.log("El documentono se ha cargado")
+      exportToExcel(state.filas, 'test.xlsx')
+    } else {
+      console.log('El documentono se ha cargado')
     }
   }
 
@@ -42,13 +48,13 @@ function Excel() {
             Selecciona un archivo excel:
           </label>
           <input
-            type={"file"}
+            type={'file'}
             className="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
             accept=".xls, .xlsx, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             name="excel"
           />
         </div>
-        <div className="flex items-center">
+        <div className="flex items-center space-x-4">
           <button className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">
             Convertir
           </button>
@@ -95,6 +101,35 @@ function Excel() {
               />
             </svg>
           </button>
+          {state.filas.length > 0 && (
+            <div className="flex items-center justify-center space-x-4">
+              <button
+                onClick={prevPage}
+                disabled={currentPage === 1}
+                className={`px-2 py-2 rounded-md ${
+                  currentPage === 1
+                    ? 'bg-gray-300 text-gray-500'
+                    : 'bg-blue-500 text-white'
+                }`}
+              >
+                Anterior
+              </button>
+              <p className="text-gray-600">
+                Página {currentPage} de {totalPages}
+              </p>
+              <button
+                onClick={nextPage}
+                disabled={currentPage === totalPages}
+                className={`px-2 py-2 rounded-md ${
+                  currentPage === totalPages
+                    ? 'bg-gray-300 text-gray-500'
+                    : 'bg-blue-500 text-white'
+                }`}
+              >
+                Siguiente
+              </button>
+            </div>
+          )}
         </div>
       </form>
       <hr />
@@ -137,20 +172,19 @@ function Excel() {
                       </tr>
                     </thead>
                     <tbody>
-                      {state.filas.map((fila, index1) => {
+                      {getPageData().map((fila, index1) => {
                         return (
                           <tr
                             className="border-b dark:border-neutral-500"
                             key={index1}
                           >
                             {state.propiedades.map((propiedad, index2) => {
-                              // console.log(propiedad)
                               return (
                                 <td
                                   className="whitespace-nowrap px-6 py-4 font-medium"
                                   key={index2}
                                 >
-                                  {fila[propiedad as keyof ExcelRow]}
+                                  {fila[propiedad]}
                                 </td>
                               )
                             })}
