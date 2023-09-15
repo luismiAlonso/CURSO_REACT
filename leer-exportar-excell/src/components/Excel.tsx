@@ -1,23 +1,38 @@
-import useTablaSize from "./useTableSize"
-import useReadExcel from "./useReadExcel"
+import useFontSize from "./useFontSize"
+import useReadExcel from "../components/readExcel/useReadExcel"
+import useExportExcel from "./exportExcel/useExportExcel"
 import { ExcelRow } from "../interfaces/Istate"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 
 function Excel() {
-  const { tablaMod, toggleTablaSize } = useTablaSize()
-  const {
-    state,
-    selectHoja,
-    cambiarHoja,
-    leerExcel
-  } = useReadExcel()
+  const { fontSize, aumentarFuente, reducirFuente } = useFontSize()
 
-    // Coloca aquí la lógica que deseas ejecutar después de la actualización del estado
-    const handlerLeerExcel= (e: React.FormEvent<HTMLFormElement> )=>{
-      leerExcel(e)
-      console.log()
+  const { state, selectHoja, cambiarHoja, leerExcel } = useReadExcel()
+
+  const [currentState, setCurrentState] = useState<ExcelRow[] | undefined>()
+
+  const { exportToExcel, exportStatus } = useExportExcel()
+
+  useEffect(() => {
+    if (state.status && state.filas) {
+      setCurrentState(state.filas)
     }
-    
+  }, [state.status])
+  // Coloca aquí la lógica que deseas ejecutar después de la actualización del estado
+  const handlerLeerExcel = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    leerExcel(e)
+  }
+
+  const handlerExportExcel = () => {
+    //e.preventDefault()
+    if (currentState !== undefined) {
+      exportToExcel(state.filas, "test.xlsx")
+    }else{
+      console.log("El documentono se ha cargado")
+    }
+  }
+
   return (
     <div className="container mx-auto p-4">
       <h1>Leer Excel</h1>
@@ -37,7 +52,13 @@ function Excel() {
           <button className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">
             Convertir
           </button>
-          <button onClick={toggleTablaSize} type="button">
+          <button
+            onClick={handlerExportExcel}
+            className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800"
+          >
+            Exportar
+          </button>
+          <button onClick={aumentarFuente} type="button">
             <svg
               width="24"
               height="24"
@@ -57,7 +78,7 @@ function Excel() {
               />
             </svg>
           </button>
-          <button onClick={toggleTablaSize} type="button">
+          <button onClick={reducirFuente} type="button">
             <svg
               width="24"
               height="24"
@@ -100,16 +121,13 @@ function Excel() {
               <div className="inline-block min-w-full py-2 sm:px-6 lg:px-8">
                 <div className="overflow-x-auto">
                   <table
-                    className={`tabla ${
-                      tablaMod
-                        ? "table-large min-w-full text-left text-sm font-light"
-                        : "table-small min-w-full text-left text-sm font-light"
-                    }`}
+                    className={`table-large min-w-full font-light`}
+                    style={{ fontSize: fontSize }}
                   >
-                    <thead className="border-b font-medium dark:border-neutral-500">
+                    <thead className="border-b dark:border-neutral-500">
                       <tr>
                         {state.propiedades.map((propiedad, index) => {
-                          console.log("propiedades:", propiedad)
+                          //  console.log("propiedades:", propiedad)
                           return (
                             <th className="px-6 py-4" key={index}>
                               {propiedad}
@@ -126,6 +144,7 @@ function Excel() {
                             key={index1}
                           >
                             {state.propiedades.map((propiedad, index2) => {
+                              // console.log(propiedad)
                               return (
                                 <td
                                   className="whitespace-nowrap px-6 py-4 font-medium"
