@@ -1,38 +1,105 @@
-import useFontSize from './useFontSize'
-import useReadExcel from '../components/readExcel/useReadExcel'
+import React from 'react'
+import useReadExcel from './readExcel/useReadExcel'
+import CustomSelect from './selectComponent/CustomSelect'
+import useCustomSelect from './selectComponent/useCustomSelect'
+import { OptionSelect } from './selectComponent/OptionsSelect'
+//import { FiltradoHookOptions, FiltradoData } from './filters/Ifilters'
+import Tabla from './Tabla/Tabla'
 import useExportExcel from './exportExcel/useExportExcel'
+import FontSizeButtons from './fontSizebuttons/FontSizeButtons'
+import Paginator from './paginator/Paginator'
 import usePaginator from './paginator/usePaginator'
 import { useEffect, useState } from 'react'
+import useFilterData from './filters/useFilterData'
 /*import { mapearArrayJSON } from "../utils/utilsData"
 import { WorksheetItem } from "../interfaces/Istate"*/
 
 function Excel() {
-  const { fontSize, aumentarFuente, reducirFuente } = useFontSize()
+  const optionsSheeds: OptionSelect[] = []
+  const filterOptionProperties: OptionSelect[] = []
+  const firstCustomSelectRef = React.createRef<HTMLSelectElement>()
 
-  const { state, resetState, selectHoja, cambiarHoja, leerExcel } =
-    useReadExcel()
-
-  const { currentPage, totalPages, getPageData, nextPage, prevPage } =
-    usePaginator(state.filas, 100)
-
-  const [currentState, setCurrentState] = useState<string[] | undefined>()
-
+  const { state, selectHoja, leerExcel } = useReadExcel()
+  const [currentDataState, setDataState] = useState<string[]>()
   const { exportToExcel, exportStatus } = useExportExcel()
 
+  const {
+    sortedDataProperties,
+    filterData
+  } = useFilterData()
+  
+  const { options, handleSelectChange, updateOptions } = useCustomSelect(
+    '',
+    optionsSheeds
+  )
+  const {
+    options: optionsProperties,
+    selectedValue: selectValueProperties,
+    handleSelectChange: handleSelectedProperties,
+    updateOptions: updateOptionsProperties
+  } = useCustomSelect('', filterOptionProperties)
+
   useEffect(() => {
+
     if (state.status && state.filas.length > 0) {
-      setCurrentState(state.propiedades)
+
+      //mapeo de hojas a strings
+      state.woorksheets.forEach((worksheet) => {
+        // options[worksheet.name] = worksheet.name
+        optionsSheeds.push({ key: worksheet.index, value: worksheet.name })
+      })
+
+      state.propiedades.forEach((propiedad, index) => {
+        if (index > 0) {
+          filterOptionProperties.push({
+            key: index.toString(),
+            value: propiedad
+          })
+        }
+      })
+
+      updateOptionsProperties(filterOptionProperties)
+      updateOptions(optionsSheeds)
     }
   }, [state])
-  // Coloca aquí la lógica que deseas ejecutar después de la actualización del estado
+
+  useEffect(() => {
+    if (sortedDataProperties !== undefined) {
+      setDataState(sortedDataProperties)
+    }
+  }, [selectValueProperties])
+
+  const enviarDataPage = (newDataPage: string[]) => {
+    setDataState(newDataPage)
+  }
+
   const handlerLeerExcel = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     leerExcel(e)
   }
 
+  const handleSeleccionHoja = (value: string) => {
+    if (value != undefined) {
+      // handleSelectChange(value)
+    }
+  }
+
+  /*const handlePropertyChange = (value: string) => {
+    if (value !== undefined && currentDataState !== undefined) {
+      updateData(currentDataState)
+      updateProperty(value)
+    }
+  }*/
+
+  const handlePropertyChange = (e: React.ChangeEvent<HTMLSelectElement>)=>{
+    if(e.target!==undefined && currentDataState!==undefined){
+      handleSelectedProperties(e)
+      filterData(currentDataState,e.target.value,"desc")
+    }
+  }
+
   const handlerExportExcel = () => {
-    //e.preventDefault()
-    if (currentState !== undefined) {
+    if (state.filas !== undefined) {
       exportToExcel(state.filas, 'test.xlsx')
     } else {
       console.log('El documentono se ha cargado')
@@ -64,135 +131,40 @@ function Excel() {
           >
             Exportar
           </button>
-          <button onClick={aumentarFuente} type="button">
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M11 11V8H13V11H16V13H13V16H11V13H8V11H11Z"
-                fill="#ffffff"
-              />
-              <path
-                fillRule="evenodd"
-                clipRule="evenodd"
-                d="M3 12C3 16.9706 7.02944 21 12 21H18C19.6569 21 21 19.6569 21 18V12C21 7.02944 16.9706 3 12 3C7.02944 3 3 7.02944 3 12ZM12 5C15.866 5 19 8.13401 19 12C19 15.866 15.866 19 12 19C8.13401 19 5 15.866 5 12C5 8.13401 8.13401 5 12 5Z"
-                fill="#ffffff"
-              />
-            </svg>
-          </button>
-          <button onClick={reducirFuente} type="button">
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path d="M 11 11 H 16 V 13 H 8 V 11 Z" fill="#ffffff" />
-              <path
-                fillRule="evenodd"
-                clipRule="evenodd"
-                d="M3 12C3 16.9706 7.02944 21 12 21H18C19.6569 21 21 19.6569 21 18V12C21 7.02944 16.9706 3 12 3C7.02944 3 3 7.02944 3 12ZM12 5C15.866 5 19 8.13401 19 12C19 15.866 15.866 19 12 19C8.13401 19 5 15.866 5 12C5 8.13401 8.13401 5 12 5Z"
-                fill="#ffffff"
-              />
-            </svg>
-          </button>
+          <FontSizeButtons />
           {state.filas.length > 0 && (
-            <div className="flex items-center justify-center space-x-4">
-              <button
-                onClick={prevPage}
-                disabled={currentPage === 1}
-                className={`px-2 py-2 rounded-md ${
-                  currentPage === 1
-                    ? 'bg-gray-300 text-gray-500'
-                    : 'bg-blue-500 text-white'
-                }`}
-              >
-                Anterior
-              </button>
-              <p className="text-gray-600">
-                Página {currentPage} de {totalPages}
-              </p>
-              <button
-                onClick={nextPage}
-                disabled={currentPage === totalPages}
-                className={`px-2 py-2 rounded-md ${
-                  currentPage === totalPages
-                    ? 'bg-gray-300 text-gray-500'
-                    : 'bg-blue-500 text-white'
-                }`}
-              >
-                Siguiente
-              </button>
-            </div>
+            <>
+              <Paginator filas={state.filas} setDataPage={enviarDataPage} />
+              <label>Filter Propiedades</label>
+              <CustomSelect
+                optionsSelect={optionsProperties}
+                selectedValueRef={firstCustomSelectRef}
+                onSeleccion={handlePropertyChange}
+              />
+            </>
           )}
         </div>
       </form>
       <hr />
       {state.status && (
         <>
-          <form>
-            <label>Hojas</label>
-            <select
-              className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-              ref={selectHoja}
-              onChange={cambiarHoja}
-            >
-              {state.woorksheets.map((hoja, index) => {
-                return (
-                  <option key={index} value={index}>
-                    {hoja.name}
-                  </option>
-                )
-              })}
-            </select>
-          </form>
+          <label>Hojas</label>
+          <CustomSelect
+            optionsSelect={options}
+            selectedValueRef={selectHoja}
+            onSeleccion={handleSeleccionHoja}
+          />
           <div className="flex flex-col overflow-x-auto">
             <div className="sm:-mx-6 lg:-mx-8">
               <div className="inline-block min-w-full py-2 sm:px-6 lg:px-8">
                 <div className="overflow-x-auto">
-                  <table
-                    className={`table-large min-w-full font-light`}
-                    style={{ fontSize: fontSize }}
-                  >
-                    <thead className="border-b dark:border-neutral-500">
-                      <tr>
-                        {state.propiedades.map((propiedad, index) => {
-                          //  console.log("propiedades:", propiedad)
-                          return (
-                            <th className="px-6 py-4" key={index}>
-                              {propiedad}
-                            </th>
-                          )
-                        })}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {getPageData().map((fila, index1) => {
-                        return (
-                          <tr
-                            className="border-b dark:border-neutral-500"
-                            key={index1}
-                          >
-                            {state.propiedades.map((propiedad, index2) => {
-                              return (
-                                <td
-                                  className="whitespace-nowrap px-6 py-4 font-medium"
-                                  key={index2}
-                                >
-                                  {fila[propiedad]}
-                                </td>
-                              )
-                            })}
-                          </tr>
-                        )
-                      })}
-                    </tbody>
-                  </table>
+                  {currentDataState !== undefined &&
+                    currentDataState.length > 0 && (
+                      <Tabla
+                        datos={currentDataState}
+                        columnas={state.propiedades}
+                      />
+                    )}
                 </div>
               </div>
             </div>
