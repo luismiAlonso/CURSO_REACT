@@ -1,47 +1,18 @@
-import React, { useEffect } from 'react'
-import usePaginator from './usePaginator'
+import React, { useEffect, useState } from 'react'
 
-function Paginator({
-  filas,
-  setDataPage
-}: {
-  filas: string[]
-  setDataPage: (data: string[]) => void
-}) {
-  const {
-    currentPage,
-    totalPages,
-    getPageData,
-    setCurrentPage,
-    nextPage,
-    prevPage
-  } = usePaginator(filas, 100)
+interface PaginatorProps {
+  currentPage: number
+  totalPages: number
+  nextPage: () => void
+  prevPage: () => void
+}
 
-  const handlerPrevPage = () => {
-    prevPage()
-    setDataPage(getPageData())
-  }
-
-  const hadlerNextPage = () => {
-    nextPage()
-    setDataPage(getPageData())
-  }
-
-  useEffect(() => {
-
-    if (getPageData() !== undefined && getPageData().length > 0) {
-      setDataPage(getPageData())
-    } else {
-      setCurrentPage(1)
-      setDataPage(filas)
-    }
-  }, [filas, totalPages])
-
+function Paginator({ currentPage, totalPages, nextPage, prevPage }:PaginatorProps) {
   return (
     <>
       <div className="flex items-center justify-center space-x-4">
         <button
-          onClick={handlerPrevPage}
+          onClick={prevPage}
           disabled={currentPage === 1}
           className={`px-2 py-2 rounded-md ${
             currentPage === 1
@@ -55,7 +26,7 @@ function Paginator({
           Página {currentPage} de {totalPages}
         </p>
         <button
-          onClick={hadlerNextPage}
+          onClick={nextPage}
           disabled={currentPage === totalPages}
           className={`px-2 py-2 rounded-md ${
             currentPage === totalPages

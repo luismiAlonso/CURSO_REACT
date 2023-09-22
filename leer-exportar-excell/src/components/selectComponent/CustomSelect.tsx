@@ -1,8 +1,8 @@
 import React from 'react'
-import { OptionSelect } from './OptionsSelect'
+import { IoptionSelect } from './IoptionsSelect'
 
 interface CustomSelectProps {
-  optionsSelect: OptionSelect[]
+  optionsSelect: IoptionSelect[]
   selectedValueRef: React.RefObject<HTMLSelectElement> // Agregamos la referencia como prop
   onSeleccion: (e: React.ChangeEvent<HTMLSelectElement>) => void
 }

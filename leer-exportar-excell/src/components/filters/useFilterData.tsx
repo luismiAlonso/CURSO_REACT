@@ -7,7 +7,6 @@ const useFilterData = () => {
   const filterData = (newData:string[],property:string,orden:'asc'| 'desc') => {
 
     let newSortedProperties: string[] = []
-    console.log(property)
 
     if (newData !== undefined && newData.length > 0 && property!==undefined && orden!==undefined) {
       newSortedProperties = ordenarDatos(newData, property, orden)
@@ -17,9 +16,14 @@ const useFilterData = () => {
     }
   }
 
+  const resetFilter = ()=>{
+    setSortedDataProperties([])
+  }
+  
   return {
     sortedDataProperties,
-    filterData
+    filterData,
+    resetFilter
   }
 }
 

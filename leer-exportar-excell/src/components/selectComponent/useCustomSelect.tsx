@@ -1,13 +1,9 @@
 import React, { useState, ChangeEvent } from 'react'
-
-interface OpcionesSelect {
-  key: string
-  value: string
-}
+import { IoptionSelect } from './IoptionsSelect'
 
 export function useCustomSelect(
   optionDefault: string,
-  opcionsInit: OpcionesSelect[]
+  opcionsInit: IoptionSelect[]
 ) {
   const [options, setOptions] = useState(opcionsInit)
   const [selectedValue, setSelectedValue] = useState(optionDefault)
@@ -17,7 +13,7 @@ export function useCustomSelect(
     setSelectedValue(value)
   }
   
-  const updateOptions = (nuevasOpciones: OpcionesSelect[]) => {
+  const updateOptions = (nuevasOpciones: IoptionSelect[]) => {
     setOptions(nuevasOpciones)
   }
 

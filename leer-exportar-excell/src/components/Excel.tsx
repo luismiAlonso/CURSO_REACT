@@ -1,33 +1,31 @@
 import React from 'react'
+import useGlobalStore from '../globaStore/GlobalStore'
 import useReadExcel from './readExcel/useReadExcel'
+import usePaginator from './paginator/usePaginator'
 import CustomSelect from './selectComponent/CustomSelect'
 import useCustomSelect from './selectComponent/useCustomSelect'
-import { OptionSelect } from './selectComponent/OptionsSelect'
-//import { FiltradoHookOptions, FiltradoData } from './filters/Ifilters'
+import useFilterData from './filters/useFilterData'
+import { OptionSelect } from './selectComponent/IoptionsSelect'
 import Tabla from './Tabla/Tabla'
 import useExportExcel from './exportExcel/useExportExcel'
 import FontSizeButtons from './fontSizebuttons/FontSizeButtons'
 import Paginator from './paginator/Paginator'
-import usePaginator from './paginator/usePaginator'
 import { useEffect, useState } from 'react'
-import useFilterData from './filters/useFilterData'
-/*import { mapearArrayJSON } from "../utils/utilsData"
-import { WorksheetItem } from "../interfaces/Istate"*/
+import useLazyLoad from './lazyLoad/useLazyLoad'
 
 function Excel() {
   const optionsSheeds: OptionSelect[] = []
   const filterOptionProperties: OptionSelect[] = []
   const firstCustomSelectRef = React.createRef<HTMLSelectElement>()
-
+  const { dataGlobalStore, setCurrentDataStore } = useGlobalStore()
   const { state, selectHoja, leerExcel } = useReadExcel()
-  const [currentDataState, setDataState] = useState<string[]>()
   const { exportToExcel, exportStatus } = useExportExcel()
+  const { dataLazyLoad, isReady, loadMoreData, setDataLazyLoad, handleScroll } =
+    useLazyLoad()
 
-  const {
-    sortedDataProperties,
-    filterData
-  } = useFilterData()
-  
+  const { sortedDataProperties, filterData, resetFilter } = useFilterData()
+  /* const { currentPage, totalPages, nextPage, prevPage, getPageData } =
+    usePaginator(state.filas, 100)*/
   const { options, handleSelectChange, updateOptions } = useCustomSelect(
     '',
     optionsSheeds
@@ -39,62 +37,72 @@ function Excel() {
     updateOptions: updateOptionsProperties
   } = useCustomSelect('', filterOptionProperties)
 
-  useEffect(() => {
+  const loadSelectOption = () => {
+    // Mapeo de hojas a strings
+    const optionsSheeds = state.woorksheets.map((worksheet) => ({
+      key: worksheet.index,
+      value: worksheet.name
+    }))
 
+    // Mapeo de propiedades
+    const filterOptionProperties = state.propiedades
+      .slice(1)
+      .map((propiedad, index) => ({
+        key: index.toString(),
+        value: propiedad
+      }))
+
+    updateOptionsProperties(filterOptionProperties)
+    updateOptions(optionsSheeds)
+  }
+
+  useEffect(() => {
     if (state.status && state.filas.length > 0) {
+      loadSelectOption()
+      // PAGINATOR
+      // componente de carga lazy
+      setDataLazyLoad(state.filas)
+      handleScroll()
 
-      //mapeo de hojas a strings
-      state.woorksheets.forEach((worksheet) => {
-        // options[worksheet.name] = worksheet.name
-        optionsSheeds.push({ key: worksheet.index, value: worksheet.name })
-      })
-
-      state.propiedades.forEach((propiedad, index) => {
-        if (index > 0) {
-          filterOptionProperties.push({
-            key: index.toString(),
-            value: propiedad
-          })
-        }
-      })
-
-      updateOptionsProperties(filterOptionProperties)
-      updateOptions(optionsSheeds)
+      if (
+        sortedDataProperties !== undefined &&
+        sortedDataProperties.length > 0
+      ) {
+        setCurrentDataStore(sortedDataProperties)
+        resetFilter()
+      }
     }
-  }, [state])
+  }, [state, selectValueProperties]) // Negamos el resultado de isReady
 
   useEffect(() => {
-    if (sortedDataProperties !== undefined) {
-      setDataState(sortedDataProperties)
+    const ready=isReady()
+    if(ready){
+      setCurrentDataStore(dataLazyLoad)
+      console.log("entro")
     }
-  }, [selectValueProperties])
+  }, [isReady()])
 
+  /*
+  * enviar data page revisar para paginator
   const enviarDataPage = (newDataPage: string[]) => {
     setDataState(newDataPage)
-  }
+  }*/
 
   const handlerLeerExcel = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     leerExcel(e)
   }
 
-  const handleSeleccionHoja = (value: string) => {
-    if (value != undefined) {
-      // handleSelectChange(value)
+  const handleSeleccionHoja = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    if (e.target != undefined) {
+      handleSelectChange(e)
     }
   }
 
-  /*const handlePropertyChange = (value: string) => {
-    if (value !== undefined && currentDataState !== undefined) {
-      updateData(currentDataState)
-      updateProperty(value)
-    }
-  }*/
-
-  const handlePropertyChange = (e: React.ChangeEvent<HTMLSelectElement>)=>{
-    if(e.target!==undefined && currentDataState!==undefined){
+  const handlePropertyChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    if (e.target !== undefined && dataGlobalStore !== undefined) {
       handleSelectedProperties(e)
-      filterData(currentDataState,e.target.value,"desc")
+      filterData(dataGlobalStore, e.target.value, 'desc')
     }
   }
 
@@ -134,7 +142,12 @@ function Excel() {
           <FontSizeButtons />
           {state.filas.length > 0 && (
             <>
-              <Paginator filas={state.filas} setDataPage={enviarDataPage} />
+              {/*<Paginator
+                prevPage={prevPage}
+                nextPage={nextPage}
+                totalPages={totalPages}
+                currentPage={currentPage}
+          />*/}
               <label>Filter Propiedades</label>
               <CustomSelect
                 optionsSelect={optionsProperties}
@@ -158,10 +171,10 @@ function Excel() {
             <div className="sm:-mx-6 lg:-mx-8">
               <div className="inline-block min-w-full py-2 sm:px-6 lg:px-8">
                 <div className="overflow-x-auto">
-                  {currentDataState !== undefined &&
-                    currentDataState.length > 0 && (
+                  {dataGlobalStore !== undefined &&
+                    dataGlobalStore.length > 0 && (
                       <Tabla
-                        datos={currentDataState}
+                        datos={dataGlobalStore}
                         columnas={state.propiedades}
                       />
                     )}

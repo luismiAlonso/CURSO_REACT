@@ -1,4 +1,4 @@
- export interface OptionSelect {
+ export interface IoptionSelect {
     key: string;
     value: string;
 }
