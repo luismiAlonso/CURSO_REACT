@@ -45,28 +45,31 @@ function Excel() {
   const {
     options: optionsProperties,
     selectedValue: selectValueProperties,
-    setSelectedValue:setSelectedValueProperties,
+    setSelectedValue: setSelectedValueProperties,
     handleSelectChange: handleSelectedProperties,
     updateOptions: updateOptionsProperties
-  } = useCustomSelect("", filterOptionProperties)
+  } = useCustomSelect('', filterOptionProperties)
 
   const { getText } = useToggle(false, { trueText: 'asc', falseText: 'desc' })
 
   const debounceSearch = useDebouncedFunction((valueSearch) => {
+    let valueProperty = ''
     if (selectValueProperties === '') {
-      console.log(state.filas, valueSearch, getText())
+      console.log(state.filas, valueSearch, state.propiedades[0], getText())
+      valueProperty = state.propiedades[0]
     } else {
       console.log(state.filas, valueSearch, selectValueProperties, getText())
+      valueProperty = selectValueProperties
     }
-    /*const response = filterByWords(
+    const response = filterByWords(
       state.filas,
       valueSearch,
-      selectValueProperties,
+      valueProperty,
       getText() as 'desc' | 'asc'
     )
     response.then((result) => {
       console.log(result)
-    })*/
+    })
   }, 400)
 
   const loadSelectOption = async () => {
@@ -79,7 +82,7 @@ function Excel() {
 
       // Mapeo de propiedades
       const filterOptionProperties = state.propiedades
-        .slice(1)
+        .slice(0)
         .map((propiedad, index) => ({
           key: index.toString(),
           value: propiedad
@@ -132,10 +135,15 @@ function Excel() {
   }
 
   const handleToggle = (value: boolean, text: string) => {
-    console.log(selectValueProperties)
-    /*const response = filterData(
+    let valueProperty = ''
+    if (selectValueProperties === '') {
+      valueProperty = state.propiedades[0]
+    } else {
+      valueProperty = selectValueProperties
+    }
+    const response = filterData(
       state.filas,
-      selectValueProperties,
+      valueProperty,
       text as 'desc' | 'asc'
     )
 
@@ -145,11 +153,10 @@ function Excel() {
         const newDataPage = setDataPage(res as string[])
         setCurrentDataStore(newDataPage)
       }
-    })*/
+    })
   }
 
   const handleInputTextChange = (valueInput: string) => {
-    console.log(valueInput)
     //aqui iria mi debounce
     debounceSearch(valueInput)
   }
@@ -173,13 +180,8 @@ function Excel() {
   }, [dataGlobalStore, nextPage, getPageData, setCurrentDataStore])
 
   useEffect(() => {
-      setCurrentDataStore(getPageData())
-   
-  }, [state])
-
-  useEffect(() => {
     setCurrentDataStore(getPageData())
-  }, [changePage])
+  }, [state, changePage])
 
   return (
     <div className="container mx-auto p-4">
