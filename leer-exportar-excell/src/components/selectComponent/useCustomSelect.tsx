@@ -20,6 +20,7 @@ export function useCustomSelect(
   return {
     options,
     selectedValue,
+    setSelectedValue,
     handleSelectChange,
     updateOptions
   }

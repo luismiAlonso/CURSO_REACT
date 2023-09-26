@@ -1,13 +1,13 @@
-import { create } from 'zustand';
+import { create } from 'zustand'
 
 interface GlobalStore {
-  dataGlobalStore: string[];
-  setCurrentDataStore: (newData: string[]) => void;
+  dataGlobalStore: string[]
+  setCurrentDataStore: (newData: string[]) => void
 }
 
 const useGlobalStore = create<GlobalStore>((set) => ({
   dataGlobalStore: [],
-  setCurrentDataStore: (newData: string[]) => set({ dataGlobalStore: newData }),
-}));
+  setCurrentDataStore: (newData: string[]) => set({ dataGlobalStore: newData })
+}))
 
-export default useGlobalStore;
+export default useGlobalStore

@@ -1,31 +1,43 @@
 import React from 'react'
 import useGlobalStore from '../globaStore/GlobalStore'
 import useReadExcel from './readExcel/useReadExcel'
+import InputFileExcel from './readExcel/InputFileExcel'
 import usePaginator from './paginator/usePaginator'
-import CustomSelect from './selectComponent/CustomSelect'
+import SelectComponent from './selectComponent/SelectComponent'
 import useCustomSelect from './selectComponent/useCustomSelect'
 import useFilterData from './filters/useFilterData'
+import useToggle from './toggle/useToggle'
+import ToggleComponent from './toggle/ToggleComponent'
 import { OptionSelect } from './selectComponent/IoptionsSelect'
 import Tabla from './Tabla/Tabla'
 import useExportExcel from './exportExcel/useExportExcel'
 import FontSizeButtons from './fontSizebuttons/FontSizeButtons'
 import Paginator from './paginator/Paginator'
-import { useEffect, useState } from 'react'
-import useLazyLoad from './lazyLoad/useLazyLoad'
+import { useEffect, useCallback } from 'react'
+import InfiniteScroll from 'react-infinite-scroll-component'
+import InputTextComponent from './inputText/inputTextComponent'
+import useDebouncedFunction from '../utilsHooks/useDebounced'
 
 function Excel() {
   const optionsSheeds: OptionSelect[] = []
   const filterOptionProperties: OptionSelect[] = []
-  const firstCustomSelectRef = React.createRef<HTMLSelectElement>()
   const { dataGlobalStore, setCurrentDataStore } = useGlobalStore()
-  const { state, selectHoja, leerExcel } = useReadExcel()
+  const { state, selectHoja, leerExcel, resetState } = useReadExcel()
   const { exportToExcel, exportStatus } = useExportExcel()
-  const { dataLazyLoad, isReady, loadMoreData, setDataLazyLoad, handleScroll } =
-    useLazyLoad()
 
-  const { sortedDataProperties, filterData, resetFilter } = useFilterData()
-  /* const { currentPage, totalPages, nextPage, prevPage, getPageData } =
-    usePaginator(state.filas, 100)*/
+  const { filterData, filterByWords } = useFilterData()
+
+  const {
+    itemsPerPage,
+    currentPage,
+    totalPages,
+    nextPage,
+    prevPage,
+    changePage,
+    getPageData,
+    setDataPage
+  } = usePaginator(state.filas, 100)
+
   const { options, handleSelectChange, updateOptions } = useCustomSelect(
     '',
     optionsSheeds
@@ -33,64 +45,66 @@ function Excel() {
   const {
     options: optionsProperties,
     selectedValue: selectValueProperties,
+    setSelectedValue:setSelectedValueProperties,
     handleSelectChange: handleSelectedProperties,
     updateOptions: updateOptionsProperties
-  } = useCustomSelect('', filterOptionProperties)
+  } = useCustomSelect("", filterOptionProperties)
 
-  const loadSelectOption = () => {
-    // Mapeo de hojas a strings
-    const optionsSheeds = state.woorksheets.map((worksheet) => ({
-      key: worksheet.index,
-      value: worksheet.name
-    }))
+  const { getText } = useToggle(false, { trueText: 'asc', falseText: 'desc' })
 
-    // Mapeo de propiedades
-    const filterOptionProperties = state.propiedades
-      .slice(1)
-      .map((propiedad, index) => ({
-        key: index.toString(),
-        value: propiedad
+  const debounceSearch = useDebouncedFunction((valueSearch) => {
+    if (selectValueProperties === '') {
+      console.log(state.filas, valueSearch, getText())
+    } else {
+      console.log(state.filas, valueSearch, selectValueProperties, getText())
+    }
+    /*const response = filterByWords(
+      state.filas,
+      valueSearch,
+      selectValueProperties,
+      getText() as 'desc' | 'asc'
+    )
+    response.then((result) => {
+      console.log(result)
+    })*/
+  }, 400)
+
+  const loadSelectOption = async () => {
+    try {
+      // Mapeo de hojas a strings
+      const optionsSheeds = state.woorksheets.map((worksheet) => ({
+        key: worksheet.index,
+        value: worksheet.name
       }))
 
-    updateOptionsProperties(filterOptionProperties)
-    updateOptions(optionsSheeds)
+      // Mapeo de propiedades
+      const filterOptionProperties = state.propiedades
+        .slice(1)
+        .map((propiedad, index) => ({
+          key: index.toString(),
+          value: propiedad
+        }))
+
+      // Utiliza await para esperar a que las operaciones asincrónicas se completen
+      await updateOptionsProperties(filterOptionProperties)
+      await updateOptions(optionsSheeds)
+      return true
+    } catch (error) {
+      console.error('Error en loadSelectOption:', error)
+      return false
+    }
   }
-
-  useEffect(() => {
-    if (state.status && state.filas.length > 0) {
-      loadSelectOption()
-      // PAGINATOR
-      // componente de carga lazy
-      setDataLazyLoad(state.filas)
-      handleScroll()
-
-      if (
-        sortedDataProperties !== undefined &&
-        sortedDataProperties.length > 0
-      ) {
-        setCurrentDataStore(sortedDataProperties)
-        resetFilter()
-      }
-    }
-  }, [state, selectValueProperties]) // Negamos el resultado de isReady
-
-  useEffect(() => {
-    const ready=isReady()
-    if(ready){
-      setCurrentDataStore(dataLazyLoad)
-      console.log("entro")
-    }
-  }, [isReady()])
-
-  /*
-  * enviar data page revisar para paginator
-  const enviarDataPage = (newDataPage: string[]) => {
-    setDataState(newDataPage)
-  }*/
 
   const handlerLeerExcel = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    leerExcel(e)
+    resetState()
+
+    leerExcel(e).then((result) => {
+      if (result) {
+        loadSelectOption()
+        //loadMachine()
+      }
+    })
   }
 
   const handleSeleccionHoja = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -100,10 +114,48 @@ function Excel() {
   }
 
   const handlePropertyChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    if (e.target !== undefined && dataGlobalStore !== undefined) {
+    if (e.target !== undefined) {
       handleSelectedProperties(e)
-      filterData(dataGlobalStore, e.target.value, 'desc')
+      const response = filterData(
+        state.filas,
+        e.target.value,
+        getText() as 'asc' | 'desc'
+      )
+      response.then((res) => {
+        if (res) {
+          //loadMachine()
+          const newDataPage = setDataPage(res as string[])
+          setCurrentDataStore(newDataPage)
+        }
+      })
     }
+  }
+
+  const handleToggle = (value: boolean, text: string) => {
+    console.log(selectValueProperties)
+    /*const response = filterData(
+      state.filas,
+      selectValueProperties,
+      text as 'desc' | 'asc'
+    )
+
+    response.then((res) => {
+      if (res) {
+        //loadMachine()
+        const newDataPage = setDataPage(res as string[])
+        setCurrentDataStore(newDataPage)
+      }
+    })*/
+  }
+
+  const handleInputTextChange = (valueInput: string) => {
+    console.log(valueInput)
+    //aqui iria mi debounce
+    debounceSearch(valueInput)
+  }
+
+  const handleInputTextClick = (valueInput: string) => {
+    console.log(valueInput)
   }
 
   const handlerExportExcel = () => {
@@ -114,6 +166,21 @@ function Excel() {
     }
   }
 
+  const loadMoreData = useCallback(() => {
+    nextPage()
+    const nextPageData = getPageData()
+    setCurrentDataStore([...dataGlobalStore, ...nextPageData])
+  }, [dataGlobalStore, nextPage, getPageData, setCurrentDataStore])
+
+  useEffect(() => {
+      setCurrentDataStore(getPageData())
+   
+  }, [state])
+
+  useEffect(() => {
+    setCurrentDataStore(getPageData())
+  }, [changePage])
+
   return (
     <div className="container mx-auto p-4">
       <h1>Leer Excel</h1>
@@ -122,12 +189,7 @@ function Excel() {
           <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
             Selecciona un archivo excel:
           </label>
-          <input
-            type={'file'}
-            className="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
-            accept=".xls, .xlsx, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            name="excel"
-          />
+          <InputFileExcel />
         </div>
         <div className="flex items-center space-x-4">
           <button className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">
@@ -142,42 +204,72 @@ function Excel() {
           <FontSizeButtons />
           {state.filas.length > 0 && (
             <>
-              {/*<Paginator
-                prevPage={prevPage}
-                nextPage={nextPage}
-                totalPages={totalPages}
-                currentPage={currentPage}
-          />*/}
+              {
+                <Paginator
+                  prevPage={prevPage}
+                  nextPage={nextPage}
+                  visible={false}
+                  totalPages={totalPages}
+                  currentPage={currentPage}
+                />
+              }
               <label>Filter Propiedades</label>
-              <CustomSelect
+              <SelectComponent
                 optionsSelect={optionsProperties}
-                selectedValueRef={firstCustomSelectRef}
+                selectedValueRef={optionsProperties[0].value}
                 onSeleccion={handlePropertyChange}
               />
             </>
           )}
+          <InputTextComponent
+            activeButton={false}
+            onChange={handleInputTextChange}
+            onClick={handleInputTextClick}
+          />
+          <ToggleComponent
+            valueProp={true}
+            onChange={(value) => handleToggle(value, value ? 'asc' : 'desc')}
+            trueText={'asc'}
+            falseText={'desc'}
+          />
         </div>
       </form>
       <hr />
       {state.status && (
         <>
           <label>Hojas</label>
-          <CustomSelect
+          <SelectComponent
             optionsSelect={options}
-            selectedValueRef={selectHoja}
+            selectedValueRef={
+              selectHoja.current !== null
+                ? selectHoja.current.value
+                : options[0].value
+            }
             onSeleccion={handleSeleccionHoja}
           />
           <div className="flex flex-col overflow-x-auto">
             <div className="sm:-mx-6 lg:-mx-8">
               <div className="inline-block min-w-full py-2 sm:px-6 lg:px-8">
                 <div className="overflow-x-auto">
-                  {dataGlobalStore !== undefined &&
-                    dataGlobalStore.length > 0 && (
-                      <Tabla
-                        datos={dataGlobalStore}
-                        columnas={state.propiedades}
-                      />
-                    )}
+                  <InfiniteScroll
+                    dataLength={currentPage * itemsPerPage} //This is important field to render the next data
+                    next={loadMoreData}
+                    hasMore={true}
+                    loader={<h4>Loading...</h4>}
+                    endMessage={
+                      <p style={{ textAlign: 'center' }}>
+                        <b>Yay! You have seen it all</b>
+                      </p>
+                    }
+                  >
+                    {dataGlobalStore !== undefined &&
+                      dataGlobalStore.length > 0 && (
+                        <Tabla
+                          datos={dataGlobalStore}
+                          columnas={state.propiedades}
+                        />
+                      )}
+                  </InfiniteScroll>
                 </div>
               </div>
             </div>

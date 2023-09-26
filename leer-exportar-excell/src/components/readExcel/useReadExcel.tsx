@@ -1,6 +1,8 @@
 import React, { useState } from 'react'
 import { State, WorksheetItem } from '../../interfaces/Istate'
+import { isDate } from '../filters/utilFiters'
 import * as XLSX from 'xlsx'
+import { format } from 'date-fns-tz'
 
 function useReadExcel() {
   const initialState: State = {
@@ -23,10 +25,24 @@ function useReadExcel() {
     try {
       const hoja = state.woorksheets[index].data
       const filas: string[] = XLSX.utils.sheet_to_json(hoja, {
-        dateNF: 'd/m/yyyy', // Especifica el formato de fecha esperado
+        dateNF: 'dd/mm/yy', // Especifica el formato de fecha esperado
         raw: false // Mantén las fechas como texto
       })
-      state.filas = filas
+
+      const mappedFilas = filas.map((row) => {
+        const entradas = Object.entries(row)
+
+        for (const [key, value] of entradas) {
+          if (isDate(value)) {
+            const date = new Date(value)
+            const formattedDate = format(date, 'dd/MM/yyyy') // Change the format as needed
+            row[key] = formattedDate
+          }
+        }
+        return row
+      })
+
+      state.filas = mappedFilas //filas
       setState({ ...state, filas: state.filas })
     } catch (error) {
       console.error('Error al leer filas', error)
@@ -66,52 +82,61 @@ function useReadExcel() {
     }
   }
 
-  const leerExcel = (e: React.FormEvent<HTMLFormElement>) => {
+  const leerExcel = async (e: React.FormEvent<HTMLFormElement>) => {
     const formData = new FormData(e.currentTarget)
     const excel = formData.get('excel')
+
     if (excel instanceof Blob) {
-      const listWorksheet: WorksheetItem[] = []
       const reader = new FileReader()
-      reader.readAsArrayBuffer(excel)
-      reader.onloadend = (e) => {
-        try {
-          if (e.target && e.target.result) {
-            const data = new Uint8Array(e.target.result as ArrayBuffer)
-            const excelRead = XLSX.read(data, {
-              type: 'array'
+
+      // Usamos una promesa para leer el archivo
+      const readFile = (file: Blob) => {
+        return new Promise((resolve, reject) => {
+          reader.onload = () => resolve(reader.result)
+          reader.onerror = reject
+          reader.readAsArrayBuffer(file)
+        })
+      }
+
+      try {
+        const fileData = await readFile(excel)
+
+        const data = new Uint8Array(fileData as ArrayBuffer)
+        const excelRead = XLSX.read(data, {
+          type: 'array'
+        })
+
+        const listWorksheet: WorksheetItem[] = []
+
+        excelRead.SheetNames.forEach(function (SheetNames, index) {
+          if (Array.isArray(excelRead.SheetNames)) {
+            listWorksheet.push({
+              data: excelRead.Sheets[SheetNames],
+              name: SheetNames,
+              index: index
             })
-
-            excelRead.SheetNames.forEach(function (SheetNames, index) {
-              if (Array.isArray(excelRead.SheetNames)) {
-                listWorksheet.push({
-                  data: excelRead.Sheets[SheetNames],
-                  name: SheetNames,
-                  index: index
-                })
-              }
-            })
-
-            state.woorksheets = listWorksheet
-
-            setState({ ...state, woorksheets: state.woorksheets })
-
-            leerPropiedades(0)
-            leerFilas(0)
-            setState({
-              ...state,
-              filas: state.filas,
-              propiedades: state.propiedades,
-              status: true
-            })
-          } else {
-            console.log('target result error')
           }
-        } catch (error) {
-          console.error('Target result error', error)
-        }
+        })
+
+        state.woorksheets = listWorksheet
+        setState({ ...state, woorksheets: state.woorksheets })
+
+        leerPropiedades(0)
+        leerFilas(0)
+        setState({
+          ...state,
+          filas: state.filas,
+          propiedades: state.propiedades,
+          status: true
+        })
+        return true
+      } catch (error) {
+        console.error('Error al procesar el archivo Excel', error)
+        return false
       }
     } else {
       console.log('Blob error')
+      return false
     }
   }
 

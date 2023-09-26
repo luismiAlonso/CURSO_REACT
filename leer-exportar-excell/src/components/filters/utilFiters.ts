@@ -12,9 +12,9 @@ export function ordenarDatos(
     // Verificar el tipo de dato de la propiedad
     const primerElemento = data[0]
     let tipoDato: 'string' | 'number' | 'date' 
-    if ((/^-?\d*\.?\d+$/).test(primerElemento[propiedad])){
+    if (isNumber(primerElemento[propiedad])){
       tipoDato = 'number'
-    } else if ((/^(0?[1-9]|1[0-2])\/(0?[1-9]|1\d|2\d|3[01])\/(19|20)?\d{2}$/).test(primerElemento[propiedad])) {
+    } else if (isDate(primerElemento[propiedad])) {
       tipoDato = 'date'
     }else{
       tipoDato = 'string'
@@ -96,6 +96,17 @@ function ordenarFechas(
   return sortedData
 }
 
+export function isDate(dateStr: string){
+  const regex =/^(0?[1-9]|1[0-2])\/(0?[1-9]|1\d|2\d|3[01])\/(19|20)?\d{2}$/
+  if((regex).test(dateStr)) return true
+  return false
+}
+
+export function isNumber(numberStr: string){
+  const regex =/^-?\d*\.?\d+$/
+  if((regex).test(numberStr)) return true
+  return false
+}
 /*
   export function filtrarDatos(
     data: objctData[],
