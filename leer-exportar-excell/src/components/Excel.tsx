@@ -8,12 +8,14 @@ import useCustomSelect from './selectComponent/useCustomSelect'
 import useFilterData from './filters/useFilterData'
 import useToggle from './toggle/useToggle'
 import ToggleComponent from './toggle/ToggleComponent'
+import ScrollComponent from './scrollComponent/ScrollComponent'
 import { OptionSelect } from './selectComponent/IoptionsSelect'
 import Tabla from './Tabla/Tabla'
 import useExportExcel from './exportExcel/useExportExcel'
 import FontSizeButtons from './fontSizebuttons/FontSizeButtons'
+import useFontSize from './fontSizebuttons/useFontSize'
 import Paginator from './paginator/Paginator'
-import { useEffect, useCallback } from 'react'
+import { useEffect, useCallback, useMemo } from 'react'
 import InfiniteScroll from 'react-infinite-scroll-component'
 import InputTextComponent from './inputText/inputTextComponent'
 import useDebouncedFunction from '../utilsHooks/useDebounced'
@@ -25,7 +27,7 @@ function Excel() {
   const { state, selectHoja, leerExcel, resetState } = useReadExcel()
   const { exportToExcel, exportStatus } = useExportExcel()
 
-  const { filterData, filterByWords } = useFilterData()
+  const { filterData, filterByWords, isFiltered } = useFilterData()
 
   const {
     itemsPerPage,
@@ -34,8 +36,9 @@ function Excel() {
     nextPage,
     prevPage,
     changePage,
-    getPageData,
-    setDataPage
+    currentDataPage,
+    setCurrentDataPage,
+    getPageData
   } = usePaginator(state.filas, 100)
 
   const { options, handleSelectChange, updateOptions } = useCustomSelect(
@@ -52,25 +55,31 @@ function Excel() {
 
   const { getText } = useToggle(false, { trueText: 'asc', falseText: 'desc' })
 
-  const debounceSearch = useDebouncedFunction((valueSearch) => {
-    let valueProperty = ''
-    if (selectValueProperties === '') {
-      console.log(state.filas, valueSearch, state.propiedades[0], getText())
-      valueProperty = state.propiedades[0]
-    } else {
-      console.log(state.filas, valueSearch, selectValueProperties, getText())
-      valueProperty = selectValueProperties
-    }
-    const response = filterByWords(
-      state.filas,
-      valueSearch,
-      valueProperty,
-      getText() as 'desc' | 'asc'
-    )
-    response.then((result) => {
-      console.log(result)
-    })
-  }, 400)
+  const valueProperty = useMemo(() => {
+    return selectValueProperties === ''
+      ? state.propiedades[0]
+      : selectValueProperties
+  }, [selectValueProperties, state.propiedades])
+
+  // Usamos useCallback para la función debounced para evitar su recreación en cada render
+  const debounceSearch = useCallback(
+    useDebouncedFunction((valueSearch) => {
+      filterByWords(
+        state.filas,
+        valueSearch,
+        valueProperty,
+        getText() as 'desc' | 'asc'
+      )
+        .then((response) => {
+          // console.log('entrooooo', response)
+          setCurrentDataPage(response as string[])
+        })
+        .catch((error) => {
+          console.error('Error al filtrar palabras:', error)
+        })
+    }, 400),
+    [filterByWords, state.filas, valueProperty, getText]
+  )
 
   const loadSelectOption = async () => {
     try {
@@ -116,50 +125,52 @@ function Excel() {
     }
   }
 
-  const handlePropertyChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    if (e.target !== undefined) {
-      handleSelectedProperties(e)
+  const handlePropertyChange = useCallback(
+    (e: React.ChangeEvent<HTMLSelectElement>) => {
+      if (e.target !== undefined) {
+        handleSelectedProperties(e)
+        const response = filterData(
+          state.filas,
+          e.target.value,
+          getText() as 'asc' | 'desc'
+        )
+        response
+          .then((result) => {
+            if (result) {
+              setCurrentDataPage(result as string[])
+              //setCurrentDataStore(newDataPage)
+            }
+          })
+          .catch((error) => {
+            console.error('Error al filtrar datos:', error)
+          })
+      }
+    },
+    [state.filas, getText, setCurrentDataPage]
+  )
+
+  const handleToggle = useCallback(
+    (value: boolean, text: string) => {
       const response = filterData(
         state.filas,
-        e.target.value,
-        getText() as 'asc' | 'desc'
+        valueProperty,
+        text as 'desc' | 'asc'
       )
       response.then((res) => {
         if (res) {
-          //loadMachine()
-          const newDataPage = setDataPage(res as string[])
-          setCurrentDataStore(newDataPage)
+          setCurrentDataPage(res as string[])
         }
       })
-    }
-  }
+    },
+    [filterData, state.filas, valueProperty, setCurrentDataPage]
+  )
 
-  const handleToggle = (value: boolean, text: string) => {
-    let valueProperty = ''
-    if (selectValueProperties === '') {
-      valueProperty = state.propiedades[0]
-    } else {
-      valueProperty = selectValueProperties
-    }
-    const response = filterData(
-      state.filas,
-      valueProperty,
-      text as 'desc' | 'asc'
-    )
-
-    response.then((res) => {
-      if (res) {
-        //loadMachine()
-        const newDataPage = setDataPage(res as string[])
-        setCurrentDataStore(newDataPage)
-      }
-    })
-  }
-
-  const handleInputTextChange = (valueInput: string) => {
-    //aqui iria mi debounce
-    debounceSearch(valueInput)
-  }
+  const handleInputTextChange = useCallback(
+    (valueInput: string) => {
+      debounceSearch(valueInput)
+    },
+    [debounceSearch]
+  )
 
   const handleInputTextClick = (valueInput: string) => {
     console.log(valueInput)
@@ -181,7 +192,7 @@ function Excel() {
 
   useEffect(() => {
     setCurrentDataStore(getPageData())
-  }, [state, changePage])
+  }, [state, changePage, isFiltered, currentDataPage])
 
   return (
     <div className="container mx-auto p-4">
@@ -272,6 +283,7 @@ function Excel() {
                         />
                       )}
                   </InfiniteScroll>
+                  <ScrollComponent />
                 </div>
               </div>
             </div>

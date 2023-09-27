@@ -1,14 +1,15 @@
-import { useState } from 'react'
+import { useState,useEffect } from 'react'
 
 const usePaginator = (data: string[], itemsPerPage: number) => {
   const [currentPage, setCurrentPage] = useState(1)
-  const [changePage,setChangePage] = useState(false)
-  const totalPages: number = Math.ceil(data.length / itemsPerPage)
+  const [changePage, setChangePage] = useState(false)
+  const [currentDataPage, setCurrentDataPage] = useState(data)
+  const totalPages: number = Math.ceil(currentDataPage.length / itemsPerPage)
 
   const getPageData = () => {
     const startIndex = (currentPage - 1) * itemsPerPage
     const endIndex = startIndex + itemsPerPage
-    return data.slice(startIndex, endIndex)
+    return currentDataPage.slice(startIndex, endIndex)
   }
 
   const nextPage = () => {
@@ -25,19 +26,24 @@ const usePaginator = (data: string[], itemsPerPage: number) => {
     }
   }
 
-  const setDataPage = (data: string[]) => {
+  /*const setDataPage = (data: string[]) => {
     const startIndex = (currentPage - 1) * itemsPerPage
     const endIndex = startIndex + itemsPerPage
+    console.log(data)
     return data.slice(startIndex, endIndex)
-  }
+  }*/
+  useEffect(() => {
+    setCurrentDataPage(data); // Actualiza currentDataPage cuando data cambia
+  }, [data]);
 
   return {
     itemsPerPage,
     currentPage,
     totalPages,
     changePage,
+    currentDataPage,
     setCurrentPage,
-    setDataPage,
+    setCurrentDataPage,
     getPageData,
     nextPage,
     prevPage
