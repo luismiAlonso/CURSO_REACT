@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import useGlobalStore from '../globaStore/GlobalStore'
 import useReadExcel from './readExcel/useReadExcel'
 import InputFileExcel from './readExcel/InputFileExcel'
@@ -9,6 +9,7 @@ import useFilterData from './filters/useFilterData'
 import useToggle from './toggle/useToggle'
 import ToggleComponent from './toggle/ToggleComponent'
 import ScrollComponent from './scrollComponent/ScrollComponent'
+import CreateHeaders from './insertHeadsTables/CreateHeadersComponent'
 import { OptionSelect } from './selectComponent/IoptionsSelect'
 import Tabla from './Tabla/Tabla'
 import useExportExcel from './exportExcel/useExportExcel'
@@ -17,12 +18,14 @@ import useFontSize from './fontSizebuttons/useFontSize'
 import Paginator from './paginator/Paginator'
 import { useEffect, useCallback, useMemo } from 'react'
 import InfiniteScroll from 'react-infinite-scroll-component'
-import InputTextComponent from './inputText/inputTextComponent'
+import InputFillComponent from './inputFill/InputFillComponent'
 import useDebouncedFunction from '../utilsHooks/useDebounced'
 
 function Excel() {
   const optionsSheeds: OptionSelect[] = []
   const filterOptionProperties: OptionSelect[] = []
+  //const [loadFilterComponent, setLoadFilterComponent] = useState(false)
+  const { fontSize, reducirFuente, aumentarFuente } = useFontSize()
   const { dataGlobalStore, setCurrentDataStore } = useGlobalStore()
   const { state, selectHoja, leerExcel, resetState } = useReadExcel()
   const { exportToExcel, exportStatus } = useExportExcel()
@@ -42,24 +45,26 @@ function Excel() {
   } = usePaginator(state.filas, 100)
 
   const { options, handleSelectChange, updateOptions } = useCustomSelect(
-    '',
+    optionsSheeds[0],
     optionsSheeds
   )
   const {
     options: optionsProperties,
     selectedValue: selectValueProperties,
+    defaultOption: defaultOptionProperties,
     setSelectedValue: setSelectedValueProperties,
     handleSelectChange: handleSelectedProperties,
     updateOptions: updateOptionsProperties
-  } = useCustomSelect('', filterOptionProperties)
+  } = useCustomSelect(state.propiedades[0], filterOptionProperties)
 
   const { getText } = useToggle(false, { trueText: 'asc', falseText: 'desc' })
 
   const valueProperty = useMemo(() => {
-    return selectValueProperties === ''
-      ? state.propiedades[0]
+    return selectValueProperties === undefined &&
+      defaultOptionProperties !== undefined
+      ? defaultOptionProperties
       : selectValueProperties
-  }, [selectValueProperties, state.propiedades])
+  }, [selectValueProperties, defaultOptionProperties])
 
   // Usamos useCallback para la función debounced para evitar su recreación en cada render
   const debounceSearch = useCallback(
@@ -71,7 +76,6 @@ function Excel() {
         getText() as 'desc' | 'asc'
       )
         .then((response) => {
-          // console.log('entrooooo', response)
           setCurrentDataPage(response as string[])
         })
         .catch((error) => {
@@ -110,11 +114,11 @@ function Excel() {
   const handlerLeerExcel = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     resetState()
+    setCurrentDataStore([])
 
     leerExcel(e).then((result) => {
       if (result) {
         loadSelectOption()
-        //loadMachine()
       }
     })
   }
@@ -159,10 +163,11 @@ function Excel() {
       response.then((res) => {
         if (res) {
           setCurrentDataPage(res as string[])
+          //setCurrentDataStore()
         }
       })
     },
-    [filterData, state.filas, valueProperty, setCurrentDataPage]
+    [filterData,state.filas, valueProperty,setCurrentDataPage]
   )
 
   const handleInputTextChange = useCallback(
@@ -184,11 +189,54 @@ function Excel() {
     }
   }
 
+  const handleAumentarFuente = (e: React.MouseEvent<HTMLButtonElement>) => {
+    aumentarFuente(e)
+  }
+
+  const handleReducirFuente = (e: React.MouseEvent<HTMLButtonElement>) => {
+    reducirFuente(e)
+  }
+
   const loadMoreData = useCallback(() => {
     nextPage()
     const nextPageData = getPageData()
-    setCurrentDataStore([...dataGlobalStore, ...nextPageData])
-  }, [dataGlobalStore, nextPage, getPageData, setCurrentDataStore])
+    const newDataGlobalStore = [...dataGlobalStore, ...nextPageData]
+    setCurrentDataStore(newDataGlobalStore)
+  }, [
+    dataGlobalStore,
+    nextPage,
+    getPageData,
+    setCurrentDataStore
+  ])
+ 
+  const filterOnLoadData = async () => {
+    if (state.filas && defaultOptionProperties) {
+      const sortOrder = getText() as 'asc' | 'desc'
+
+      try {
+        const result = await filterData(
+          state.filas,
+          defaultOptionProperties,
+          sortOrder
+        )
+        if (result) {
+          setCurrentDataPage(result as string[])
+          return true
+        }
+      } catch (error) {
+        console.error('Error al filtrar datos:', error)
+        return false
+      }
+    } else {
+      return false
+    }
+  }
+
+  useEffect(() => {
+    if (defaultOptionProperties !== undefined) {
+      filterOnLoadData()
+    }
+  }, [defaultOptionProperties])
 
   useEffect(() => {
     setCurrentDataStore(getPageData())
@@ -214,7 +262,10 @@ function Excel() {
           >
             Exportar
           </button>
-          <FontSizeButtons />
+          <FontSizeButtons
+            aumentarFuente={handleAumentarFuente}
+            reducirFuente={handleReducirFuente}
+          />
           {state.filas.length > 0 && (
             <>
               {
@@ -234,8 +285,10 @@ function Excel() {
               />
             </>
           )}
-          <InputTextComponent
+          <InputFillComponent
             activeButton={false}
+            activeSearchIcon={true}
+            typeFill={'search'}
             onChange={handleInputTextChange}
             onClick={handleInputTextClick}
           />
@@ -246,6 +299,7 @@ function Excel() {
             falseText={'desc'}
           />
         </div>
+        {/*<CreateHeaders />*/}
       </form>
       <hr />
       {state.status && (
@@ -280,6 +334,7 @@ function Excel() {
                         <Tabla
                           datos={dataGlobalStore}
                           columnas={state.propiedades}
+                          fontStyleSize={fontSize.toString()}
                         />
                       )}
                   </InfiniteScroll>

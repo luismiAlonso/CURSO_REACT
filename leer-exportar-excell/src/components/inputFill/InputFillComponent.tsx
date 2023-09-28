@@ -1,12 +1,14 @@
 import React, { useState } from 'react'
 
 interface ItextInput {
-  activeButton: boolean
+  activeButton: boolean,
+  activeSearchIcon: boolean,
+  typeFill: "search" | "text" | "number"
   onChange: (value: string) => void
   onClick: (value: string) => void
 }
 
-function InputTextComponent({ activeButton, onChange, onClick }: ItextInput) {
+function InputFillComponent({ activeButton,activeSearchIcon,typeFill,onChange, onClick }: ItextInput) {
   const [valueInput, setValueInput] = useState('')
 
   // Función de manejo de cambios del input
@@ -30,7 +32,9 @@ function InputTextComponent({ activeButton, onChange, onClick }: ItextInput) {
       </label>
       <div className="relative">
         <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-          <svg
+          {
+            activeSearchIcon &&
+            <svg
             className="w-4 h-4 text-gray-500 dark:text-gray-400"
             aria-hidden="true"
             xmlns="http://www.w3.org/2000/svg"
@@ -45,9 +49,10 @@ function InputTextComponent({ activeButton, onChange, onClick }: ItextInput) {
               d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"
             />
           </svg>
+          }
         </div>
         <input
-          type="search"
+          type={typeFill}
           onChange={handleOnChange} // Asocia la función de manejo de cambios
           value={valueInput}
           id="default-search"
@@ -68,4 +73,4 @@ function InputTextComponent({ activeButton, onChange, onClick }: ItextInput) {
   )
 }
 
-export default InputTextComponent
+export default InputFillComponent

@@ -1,4 +1,4 @@
-import React, { useState, ChangeEvent } from 'react'
+import React, { useState, ChangeEvent, useEffect } from 'react'
 import { IoptionSelect } from './IoptionsSelect'
 
 export function useCustomSelect(
@@ -7,6 +7,7 @@ export function useCustomSelect(
 ) {
   const [options, setOptions] = useState(opcionsInit)
   const [selectedValue, setSelectedValue] = useState(optionDefault)
+  const [defaultOption,setDefaultOption] = useState(optionDefault)
 
   const handleSelectChange = (e: ChangeEvent<HTMLSelectElement>) => {
     const value=e.target.value;
@@ -17,9 +18,15 @@ export function useCustomSelect(
     setOptions(nuevasOpciones)
   }
 
+  useEffect(()=>{
+    setDefaultOption(optionDefault)
+  },[optionDefault])
+
   return {
     options,
     selectedValue,
+    defaultOption,
+    setDefaultOption,
     setSelectedValue,
     handleSelectChange,
     updateOptions

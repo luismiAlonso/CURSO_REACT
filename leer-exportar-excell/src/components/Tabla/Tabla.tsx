@@ -1,9 +1,9 @@
 import React from 'react'
 import { TablaProps } from './Itabla'
 
-function Tabla<T>({ datos, columnas }: TablaProps<T>) {
+function Tabla<T>({ datos, columnas,fontStyleSize }: TablaProps<T>) {
   return (
-    <table className="table-large min-w-full font-light">
+    <table style={{ fontSize: `${fontStyleSize}px` }} className="table-large min-w-full font-light">
       <thead className="border-b dark:border-neutral-500">
         <tr>
           {columnas !== undefined &&

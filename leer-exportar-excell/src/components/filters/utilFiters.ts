@@ -1,5 +1,5 @@
 export function sortData(
-  data: string[],
+  data: any[],
   propiedad: string,
   orden: 'asc' | 'desc'
 ): string[] {
@@ -19,7 +19,7 @@ export function sortData(
     } else {
       tipoDato = 'string'
     }
-
+   //console.log(tipoDato)
     switch (tipoDato) {
       case 'number':
         copiaOrdenada = ordenarNumeros(data, propiedad, orden)
@@ -82,61 +82,100 @@ export function sortDataByInputFill(
 }
 
 function ordenarCadenas(
-  data: string[],
+  data: any[],
   propiedad: string,
   orden: 'asc' | 'desc'
 ): string[] {
-  const sortedData = [...data]
-  sortedData.sort((a, b) => {
-    if (orden === 'asc') {
-      return a[propiedad].localeCompare(b[propiedad])
-    } else {
-      return b[propiedad].localeCompare(a[propiedad])
-    }
-  })
-  return sortedData
+  try {
+    const sortedData = [...data]
+    sortedData.sort((a, b) => {
+      const valorA = a[propiedad]
+      const valorB = b[propiedad]
+
+      // Verificar si los valores son strings válidos
+      if (typeof valorA === 'string' && typeof valorB === 'string') {
+        if (orden === 'asc') {
+          return valorA.localeCompare(valorB)
+        } else {
+          return valorB.localeCompare(valorA)
+        }
+      } else if (typeof valorA === 'string') {
+        // Si valorB no es un string válido, se considera valorA "mayor"
+        return orden === 'asc' ? 1 : -1
+      } else if (typeof valorB === 'string') {
+        // Si valorA no es un string válido, se considera valorB "mayor"
+        return orden === 'asc' ? -1 : 1
+      } else {
+        // Ambos valores no son strings válidos, se consideran iguales
+        return 0
+      }
+    })
+    return sortedData
+  } catch (error) {
+    console.error(error)
+    return []
+  }
 }
 
 function ordenarNumeros(
-  data: string[],
+  data: any[],
   propiedad: string,
   orden: 'asc' | 'desc'
 ): string[] {
-  const sortedData = [...data]
+  try {
+    const sortedData = [...data]
+    sortedData.sort((a, b) => {
+      const numA = parseFloat(a[propiedad])
+      const numB = parseFloat(b[propiedad])
 
-  sortedData.sort((a, b) => {
-    const numA = parseFloat(a[propiedad])
-    const numB = parseFloat(b[propiedad])
+      if (isNaN(numA) && isNaN(numB)) {
+        return 0
+      } else if (isNaN(numA)) {
+        return orden === 'asc' ? -1 : 1
+      } else if (isNaN(numB)) {
+        return orden === 'asc' ? 1 : -1
+      } else {
+        return orden === 'asc' ? numA - numB : numB - numA
+      }
+    })
 
-    if (orden === 'asc') {
-      return numA - numB
-    } else {
-      return numB - numA
-    }
-  })
-
-  return sortedData
+    return sortedData
+  } catch (error) {
+    console.error(error)
+    return []
+  }
 }
 
 function ordenarFechas(
-  data: string[],
+  data: any[],
   propiedad: string,
   orden: 'asc' | 'desc'
 ): string[] {
-  const sortedData = [...data]
+  try {
+    const sortedData = [...data]
 
-  sortedData.sort((a, b) => {
-    const dateA = new Date(a[propiedad])
-    const dateB = new Date(b[propiedad])
+    sortedData.sort((a, b) => {
+      const dateA = new Date(a[propiedad])
+      const dateB = new Date(b[propiedad])
 
-    if (orden === 'asc') {
-      return dateA.getTime() - dateB.getTime()
-    } else {
-      return dateB.getTime() - dateA.getTime()
-    }
-  })
+      if (isNaN(dateA.getTime()) && isNaN(dateB.getTime())) {
+        return 0
+      } else if (isNaN(dateA.getTime())) {
+        return orden === 'asc' ? -1 : 1
+      } else if (isNaN(dateB.getTime())) {
+        return orden === 'asc' ? 1 : -1
+      } else {
+        return orden === 'asc'
+          ? dateA.getTime() - dateB.getTime()
+          : dateB.getTime() - dateA.getTime()
+      }
+    })
 
-  return sortedData
+    return sortedData
+  } catch (error) {
+    console.error(error)
+    return []
+  }
 }
 
 function filtrarYOrdenarCadenas(
@@ -154,8 +193,8 @@ function filtrarYOrdenarCadenas(
       )
       .sort((a, b) =>
         orden === 'asc'
-          ? String(a[propiedad]).localeCompare(String(b[propiedad]))
-          : String(b[propiedad]).localeCompare(String(a[propiedad]))
+          ? String(a[propiedad] || '').localeCompare(String(b[propiedad] || ''))
+          : String(b[propiedad] || '').localeCompare(String(a[propiedad] || ''))
       )
     return filteredData
   } catch (error) {
@@ -174,12 +213,13 @@ function filtrarYOrdenarNumeros(
     return data
       .filter(
         (item) =>
-          item[propiedad] && item[propiedad].toString().includes(palabra)
+          item[propiedad] != null &&
+          item[propiedad].toString().includes(palabra)
       )
       .sort((a, b) =>
         orden === 'asc'
-          ? a[propiedad] - b[propiedad]
-          : b[propiedad] - a[propiedad]
+          ? (parseFloat(a[propiedad]) || 0) - (parseFloat(b[propiedad]) || 0)
+          : (parseFloat(b[propiedad]) || 0) - (parseFloat(a[propiedad]) || 0)
       )
   } catch (error) {
     console.log(error)
@@ -192,21 +232,25 @@ function filtrarYOrdenarFechas(
   palabra: string,
   propiedad: string,
   orden: 'asc' | 'desc'
-): any[] {
+): string[] {
   try {
     const filteredData = data
       .filter((item) => {
         if (item[propiedad]) {
-          const formattedDate = new Date(item[propiedad]).toLocaleDateString('en-GB').trim()
+          const formattedDate = new Date(item[propiedad])
+            .toLocaleDateString('en-GB')
+            .trim()
           return formattedDate.includes(palabra)
         }
         return false
       })
-      .sort((a, b) =>
-        orden === 'asc'
-          ? new Date(a[propiedad]).getTime() - new Date(b[propiedad]).getTime()
-          : new Date(b[propiedad]).getTime() - new Date(a[propiedad]).getTime()
-      )
+      .sort((a, b) => {
+        const dateA = new Date(a[propiedad] || 0)
+        const dateB = new Date(b[propiedad] || 0)
+        return orden === 'asc'
+          ? dateA.getTime() - dateB.getTime()
+          : dateB.getTime() - dateA.getTime()
+      })
     return filteredData
   } catch (error) {
     console.log(error)

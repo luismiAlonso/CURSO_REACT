@@ -1,8 +1,12 @@
 import React from 'react'
 import useFontSize from '../fontSizebuttons/useFontSize'
 
-function FontSizeButtons() {
-  const { aumentarFuente, reducirFuente } = useFontSize();
+interface FontSizeButtonsProps {
+  aumentarFuente: () => void;
+  reducirFuente: () => void;
+}
+
+function FontSizeButtons({aumentarFuente, reducirFuente}: FontSizeButtonsProps) {
 
   return (
     <div>
