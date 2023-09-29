@@ -1,84 +1,74 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react';
 
 const usePaginator = (data: string[], itemsPerPage: number) => {
-  const [currentPage, setCurrentPage] = useState(1)
-  const [changePage, setChangePage] = useState(false)
-  const [currentDataPage, setCurrentDataPage] = useState(data)
-  const [totalPages, setTotalPages] = useState(
-    Math.ceil(data.length / itemsPerPage)
-  )
-  const [amountData, setAmountData] = useState(data)
-
-  // const totalPages: number = Math.ceil(currentDataPage.length / itemsPerPage)
+  const [currentPage, setCurrentPage] = useState(0); // Cambiamos a 0 para usar índices base 0
+  const [changePage, setChangePage] = useState(false);
+  const [totalPages, setTotalPages] = useState(0); // Se actualizará más adelante
+  const [dataPages, setDataPages] = useState<string[][]>([]); // Matriz de vectores por página
 
   const getPageData = () => {
-    const startIndex = (currentPage - 1) * itemsPerPage
-    const endIndex = startIndex + itemsPerPage
-    return currentDataPage.slice(startIndex, endIndex)
-  }
-
-  const getNextPage = () => {
-    if (currentPage + 1 <= data.length) {
-      let newCurrentPage = currentPage
-      newCurrentPage++
-      setCurrentPage(newCurrentPage)
-      const startIndex = (newCurrentPage - 1) * itemsPerPage
-      const endIndex = startIndex + itemsPerPage
-      return currentDataPage.slice(startIndex, endIndex)
-    } else {
-      currentDataPage
-    }
-  }
+    return dataPages[currentPage] || [];
+  };
 
   const nextPage = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage(currentPage + 1)
-      setChangePage(true)
+    if (currentPage < totalPages - 1) {
+      setCurrentPage(currentPage + 1);
+      setChangePage(true);
     }
-  }
+  };
 
   const prevPage = () => {
-    if (currentPage >= 1) {
-      setCurrentPage(currentPage - 1)
-      setChangePage(false)
+    if (currentPage > 0) {
+      setCurrentPage(currentPage - 1);
+      setChangePage(false);
     }
-  }
+  };
 
   const resetPaginator = (newData: string[]) => {
-    setChangePage(false)
-    setCurrentPage(1)
-    setTotalPages(Math.ceil(newData.length / itemsPerPage))
-    setCurrentDataPage(newData)
-  }
+    const newTotalPages = Math.ceil(newData.length / itemsPerPage);
+    setChangePage(false);
+    setCurrentPage(0);
+    setTotalPages(newTotalPages);
+    // Trocear y cargar la matriz con los nuevos datos
+    const newDataPages = chunkArray(newData, itemsPerPage);
+    setDataPages(newDataPages);
+  };
 
-  const lazyLoad = () => {
-    const dataSlize = getPageData()
-    setAmountData([...amountData, ...dataSlize])
-    //console.log(amountData)
-    return amountData
-  }
+  const updateDataPages = (newData: string[]) => {
+    // Actualizar la matriz de páginas cuando se recibe un nuevo vector de datos
+    setTotalPages(Math.ceil(newData.length / itemsPerPage));
+    // Trocear y cargar la matriz con los nuevos datos
+    const newDataPages = chunkArray(newData, itemsPerPage);
+    setDataPages(newDataPages);
+  };
 
   useEffect(() => {
-    setCurrentDataPage(data)
-    setAmountData(data)
-    setTotalPages(Math.ceil(currentDataPage.length / itemsPerPage)) // Recalcular totalPages
-  }, [data, currentDataPage.length])
+    setTotalPages(Math.ceil(data.length / itemsPerPage));
+    // Trocear y cargar la matriz con los datos iniciales
+    const initialDataPages = chunkArray(data, itemsPerPage);
+    setDataPages(initialDataPages);
+  }, [data, itemsPerPage]);
+
+  // Función para trocear un array en subarrays del tamaño especificado
+  const chunkArray = (array: string[], size: number) => {
+    const chunkedArray: string[][] = [];
+    for (let i = 0; i < array.length; i += size) {
+      chunkedArray.push(array.slice(i, i + size));
+    }
+    return chunkedArray;
+  };
 
   return {
     itemsPerPage,
     currentPage,
     totalPages,
     changePage,
-    currentDataPage,
-    getNextPage,
-    lazyLoad,
-    setCurrentPage,
-    setCurrentDataPage,
-    resetPaginator,
     getPageData,
     nextPage,
-    prevPage
-  }
-}
+    prevPage,
+    resetPaginator,
+    updateDataPages// Agregamos la función para actualizar la matriz de páginas
+  };
+};
 
-export default usePaginator
+export default usePaginator;

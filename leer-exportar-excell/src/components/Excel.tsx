@@ -39,14 +39,11 @@ function Excel() {
     currentPage,
     totalPages,
     changePage,
-    currentDataPage,
+    getPageData,
     nextPage,
-    lazyLoad,
-    getNextPage,
     prevPage,
     resetPaginator,
-    setCurrentDataPage,
-    getPageData
+    updateDataPages
   } = usePaginator(state.filas, 100)
 
   const { options, handleSelectChange, updateOptions } = useCustomSelect(
@@ -145,8 +142,8 @@ function Excel() {
         response
           .then((result) => {
             if (result) {
-              // setCurrentDataPage(result as string[])
-              setCurrentDataStore(result as string[])
+               updateDataPages(result as string[])
+             // setCurrentDataStore(result as string[])
             }
           })
           .catch((error) => {
@@ -154,7 +151,7 @@ function Excel() {
           })
       }
     },
-    [state.filas, getText, setCurrentDataPage]
+    [state.filas, getText, updateDataPages]
   )
 
   const handleToggle = useCallback(
@@ -170,11 +167,11 @@ function Excel() {
           scrollToTop()
           //resetPaginator(res as string[])
           //setCurrentDataPage(res as string[])
-          setCurrentDataStore(res as string[])
+          updateDataPages(res as string[])
         }
       })
     },
-    [filterData, state.filas, valueProperty, setCurrentDataPage]
+    [filterData, state.filas, valueProperty, updateDataPages]
   )
 
   const handleInputTextChange = useCallback(
@@ -224,7 +221,7 @@ function Excel() {
     setCurrentDataStore(newDataGlobalStore)*/
 
   const loadMoreData = useCallback(() => {
-   // nextPage()
+    nextPage()
 
   }, [nextPage,dataGlobalStore,setCurrentDataStore])
 
@@ -239,7 +236,7 @@ function Excel() {
           sortOrder
         )
         if (result) {
-          setCurrentDataPage(result as string[])
+          updateDataPages(result as string[])
           return true
         }
       } catch (error) {
@@ -259,10 +256,10 @@ function Excel() {
 
   useEffect(() => {
     //console.log(lazyLoad())
-    
+    console.log(getPageData())
     setCurrentDataStore(getPageData())
   
-  }, [state, changePage, isFiltered, currentDataPage])
+  }, [state, changePage, isFiltered, currentPage])
 
   
 
