@@ -50,3 +50,7 @@ export function checkFecha(data: string) {
   const coincidencia = regexFecha.exec(data)
   return coincidencia
 }
+
+export function areArraysEqual(arr1:string[], arr2:string[]) {
+  return JSON.stringify(arr1) === JSON.stringify(arr2);
+}

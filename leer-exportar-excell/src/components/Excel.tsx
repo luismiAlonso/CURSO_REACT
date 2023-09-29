@@ -9,8 +9,10 @@ import useFilterData from './filters/useFilterData'
 import useToggle from './toggle/useToggle'
 import ToggleComponent from './toggle/ToggleComponent'
 import ScrollComponent from './scrollComponent/ScrollComponent'
+import useScroll from './scrollComponent/useCroll'
 import CreateHeaders from './insertHeadsTables/CreateHeadersComponent'
 import { OptionSelect } from './selectComponent/IoptionsSelect'
+import { areArraysEqual } from '../utils/utilsData'
 import Tabla from './Tabla/Tabla'
 import useExportExcel from './exportExcel/useExportExcel'
 import FontSizeButtons from './fontSizebuttons/FontSizeButtons'
@@ -29,17 +31,20 @@ function Excel() {
   const { dataGlobalStore, setCurrentDataStore } = useGlobalStore()
   const { state, selectHoja, leerExcel, resetState } = useReadExcel()
   const { exportToExcel, exportStatus } = useExportExcel()
-
+  const { scrollToTop } = useScroll()
   const { filterData, filterByWords, isFiltered } = useFilterData()
 
   const {
     itemsPerPage,
     currentPage,
     totalPages,
-    nextPage,
-    prevPage,
     changePage,
     currentDataPage,
+    nextPage,
+    lazyLoad,
+    getNextPage,
+    prevPage,
+    resetPaginator,
     setCurrentDataPage,
     getPageData
   } = usePaginator(state.filas, 100)
@@ -114,7 +119,6 @@ function Excel() {
   const handlerLeerExcel = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     resetState()
-    setCurrentDataStore([])
 
     leerExcel(e).then((result) => {
       if (result) {
@@ -141,8 +145,8 @@ function Excel() {
         response
           .then((result) => {
             if (result) {
-              setCurrentDataPage(result as string[])
-              //setCurrentDataStore(newDataPage)
+              // setCurrentDataPage(result as string[])
+              setCurrentDataStore(result as string[])
             }
           })
           .catch((error) => {
@@ -162,12 +166,15 @@ function Excel() {
       )
       response.then((res) => {
         if (res) {
-          setCurrentDataPage(res as string[])
-          //setCurrentDataStore()
+          resetPaginator(res as string[])
+          scrollToTop()
+          //resetPaginator(res as string[])
+          //setCurrentDataPage(res as string[])
+          setCurrentDataStore(res as string[])
         }
       })
     },
-    [filterData,state.filas, valueProperty,setCurrentDataPage]
+    [filterData, state.filas, valueProperty, setCurrentDataPage]
   )
 
   const handleInputTextChange = useCallback(
@@ -197,18 +204,30 @@ function Excel() {
     reducirFuente(e)
   }
 
-  const loadMoreData = useCallback(() => {
-    nextPage()
-    const nextPageData = getPageData()
+  /*const loadMoreData = useCallback(() => {
+    getNextPage().then((response)=>{
+      console.log("nextePage:",response)
+      console.log("actual:",dataGlobalStore)
+
+    })
+    console.log("datos devueltos por getData",dataGlobalStore)
+    if (nextPageData) {
+      const mergeData = [...dataGlobalStore, ...nextPageData]
+      
+      setCurrentDataStore(mergeData)
+    }
+  }, [dataGlobalStore, getNextPage, setCurrentDataStore])*/
+
+  /*const nextPageData = getPageData()
     const newDataGlobalStore = [...dataGlobalStore, ...nextPageData]
-    setCurrentDataStore(newDataGlobalStore)
-  }, [
-    dataGlobalStore,
-    nextPage,
-    getPageData,
-    setCurrentDataStore
-  ])
- 
+    console.log(newDataGlobalStore)
+    setCurrentDataStore(newDataGlobalStore)*/
+
+  const loadMoreData = useCallback(() => {
+   // nextPage()
+
+  }, [nextPage,dataGlobalStore,setCurrentDataStore])
+
   const filterOnLoadData = async () => {
     if (state.filas && defaultOptionProperties) {
       const sortOrder = getText() as 'asc' | 'desc'
@@ -239,8 +258,13 @@ function Excel() {
   }, [defaultOptionProperties])
 
   useEffect(() => {
+    //console.log(lazyLoad())
+    
     setCurrentDataStore(getPageData())
+  
   }, [state, changePage, isFiltered, currentDataPage])
+
+  
 
   return (
     <div className="container mx-auto p-4">
